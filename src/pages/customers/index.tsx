@@ -1,8 +1,8 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import { Button, TextField, Typography, useFormControl } from "@mui/material";
-import Modal from "@mui/material/Modal";
+import { Button } from "@mui/material";
+import { useForm } from "react-hook-form";
 
 import {
   DataGrid,
@@ -12,9 +12,9 @@ import {
 } from "@mui/x-data-grid";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 
 import Nav from "../nav";
+import CustomerPopup from "@/components/customer-model.component";
 
 interface Icustomer {
   _id: string;
@@ -34,18 +34,6 @@ function generateRandom() {
   return retVal;
 }
 
-function getModalStyle() {
-  const top = 50;
-  const left = 50;
-
-  return {
-    top: `${top}%`,
-    margin: "auto",
-    left: `${left}%`,
-    transform: `translate(-${top}%, -${left}%)`,
-  };
-}
-
 export default function Customers() {
   const [customerData, setCustomerData] = useState<Icustomer[]>([]);
   const [open, setOpen] = useState(false);
@@ -57,13 +45,7 @@ export default function Customers() {
     setOpen(false);
     setEditMode(false);
   };
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm();
+  const { reset } = useForm();
 
   useEffect(() => {
     getAllCustomers();
@@ -181,6 +163,13 @@ export default function Customers() {
     });
   };
 
+  const popUpPropps = {
+    open: open,
+    editMode: editMode,
+    handleClose: handleClose,
+    customerFormSubmit: customerFormSubmit,
+  };
+
   return (
     <>
       <Nav />
@@ -206,102 +195,7 @@ export default function Customers() {
             experimentalFeatures={{ newEditingApi: true }}
           />
         </Box>
-
-        <Modal
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-          style={getModalStyle()}
-        >
-          <Box
-            component="form"
-            sx={{
-              "& .MuiTextField-root": { mt: 2, p: 1, width: "95%" },
-              height: "500px",
-              backgroundColor: "#9E9E9E",
-            }}
-            noValidate
-            autoComplete="off"
-            onSubmit={handleSubmit(customerFormSubmit)}
-          >
-            <div className="formFieldContainer">
-              <TextField
-                id="outlined-required"
-                label="Customer Name"
-                {...register("customerName", { required: true })}
-              />
-              {errors.customerName &&
-                errors.customerName.type == "required" && (
-                  <span style={{ color: "red" }}>
-                    Please fill customer name field!
-                  </span>
-                )}
-            </div>
-            <div className="formFieldContainer">
-              <TextField
-                id="outlined-required"
-                label="Contact Person"
-                {...register("contactPerson", { required: true })}
-              />
-              {errors.contactPerson &&
-                errors.contactPerson.type == "required" && (
-                  <span style={{ color: "red" }}>
-                    Please fill contactPerson field!
-                  </span>
-                )}
-            </div>
-            <div className="formFieldContainer">
-              <TextField
-                id="outlined-required"
-                label="Address"
-                {...register("address", { required: true })}
-              />
-              {errors.address && errors.address.type == "required" && (
-                <span style={{ color: "red" }}>Please fill address field!</span>
-              )}
-            </div>
-            <div className="formFieldContainer">
-              <TextField
-                id="outlined-required"
-                label="Mobile"
-                type="number"
-                {...register("mobile", { required: true })}
-              />
-              {errors.mobile && errors.mobile.type == "required" && (
-                <span style={{ color: "red" }}>Please fill mobile field!</span>
-              )}
-            </div>
-            <div
-              className="formFieldContainer"
-              style={{ display: "flex", justifyContent: "space-between" }}
-            >
-              <Button
-                variant="outlined"
-                style={{
-                  background: "#424242",
-                  color: "white",
-                  marginTop: "5px",
-                }}
-                type="submit"
-              >
-                {!editMode ? "Add Customer" : "Update Customer"}
-              </Button>
-              <Button
-                variant="outlined"
-                style={{
-                  background: "#424242",
-                  color: "white",
-                  marginTop: "5px",
-                  right: "30px",
-                }}
-                onClick={handleClose}
-              >
-                Close
-              </Button>
-            </div>
-          </Box>
-        </Modal>
+        <CustomerPopup {...popUpPropps} />
       </Container>
     </>
   );
