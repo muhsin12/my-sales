@@ -14,7 +14,84 @@ a {
 .formFieldContainer {
   padding-left: 32px;
 }
+.error {
+  color: red;
+}
+.title {
+  text-align: center;
+  padding-top: 20px;
+  margin-top: 0;
+  color: black;
+}
+.sales-wrapper {
+  display: flex;
+  flex-direction: row;
+  padding-top: 50px;
+}
+.sales-left {
+  width: 875px;
+  height: auto;
+  padding-top: 20px;
+}
+.sales-right {
+  width: 550px;
+  min-height: 300px;
+  border: 1px solid #000;
+  padding: 20px;
+  margin-right: 20px;
+  max-height: 700px;
+  overflow-y: scroll;
+}
+.item-card {
+  width: 200px;
+  text-align: center;
+}
+.main-grid-row {
+  justify-content: space-evenly;
+}
 
+.cat-grid-row {
+  padding: 30px;
+}
+
+.category-button {
+  width: 200px;
+  height: 60px;
+}
+.bill-table-row {
+  background-color: #00838f;
+}
+.bill-table-head {
+  font-weight: bold;
+  color: white;
+}
+.item-quantity {
+  width: 35px;
+  height: 20px;
+  display: inline-block;
+  padding: 5px;
+  text-align: center;
+  position: relative;
+  bottom: 5px;
+}
+.quantity-update-button {
+  cursor: pointer;
+}
+.bill-footer {
+  color: black;
+  height: 30px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+}
+/* .mp-header {
+  color: red;
+}
+div:has(> div.mp-header) {
+  background-color: aqua;
+} */
+.tdWidth {
+  max-width: 150px;
+}
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;

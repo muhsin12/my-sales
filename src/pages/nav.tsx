@@ -14,9 +14,12 @@ import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
 import Link from "next/link";
 const pages = [
-  { headerName: "Home", link: "/" },
-  { headerName: "Customers", link: "customers" },
-  { headerName: "Deposit", link: "deposit" },
+  { headerName: "Home", link: "/home" },
+  { headerName: "Category", link: "category" },
+  { headerName: "Items", link: "products" },
+  { headerName: "Sales Data", link: "sales" },
+  { headerName: "Expense Category", link: "expense-category" },
+  { headerName: "Expense Data", link: "expenses" },
 ];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
@@ -44,7 +47,7 @@ function Nav() {
   };
 
   return (
-    <AppBar position="static" style={{ background: "#424242" }}>
+    <AppBar position="static" style={{ background: "#00838f" }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
@@ -63,7 +66,7 @@ function Nav() {
               textDecoration: "none",
             }}
           >
-            Diamond Lock
+            Kuwait Restaurant
           </Typography>
 
           <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
