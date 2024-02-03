@@ -46,6 +46,7 @@ function CategoryPopup(props: any) {
 
   const validate = () => {
     let tmp: any = {};
+    console.log("validate--catfff-", values.categoryName);
     tmp.categoryName = values.categoryName ? "" : "Category Name is required";
     setErrors({ ...tmp });
     return Object.values(tmp).every((x) => x == "");

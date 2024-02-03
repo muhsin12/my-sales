@@ -1,15 +1,15 @@
 const { connectToDatabase } = require("../db");
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
-  readAllPurchases,
-  createPurchase,
-  updatePurchases,
-  deletepurchases,
-} from "../../../controllers/purchase-controller";
+  readSalesDetails,
+  createSales,
+  updateSales,
+} from "../../../controllers/sales-details-controller";
 
 type Data = {
   name: string;
 };
+
 export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
@@ -18,17 +18,8 @@ export default function handler(
     .then(() => {
       console.log("connected to mongo db ");
       switch (req.method) {
-        case "GET":
-          readAllPurchases(req, res);
-          break;
         case "POST":
-          createPurchase(req, res);
-          break;
-        case "PATCH":
-          updatePurchases(req, res);
-          break;
-        case "DELETE":
-          deletepurchases(req, res);
+          readSalesDetails(req, res);
           break;
       }
     })

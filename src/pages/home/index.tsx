@@ -148,7 +148,7 @@ export default function Home() {
         <Box sx={{ bgcolor: "#b2ebf2", height: "100px" }}>
           <Grid container spacing={2} className="cat-grid-row">
             {categories.map((cat: any) => (
-              <Grid key={cat._id} xs={3} className="category-grid">
+              <Grid key={cat._id} xs={2} className="category-grid">
                 <Button
                   variant="outlined"
                   size="large"
@@ -166,14 +166,11 @@ export default function Home() {
             <div className="sales-left">
               <Grid container spacing={3} className="main-grid-row">
                 {itemList.map((item: any) => (
-                  <Grid key={item._id} xs={2}>
+                  <Grid key={item._id} xs={3}>
                     <Card className="item-card">
                       <CardContent>{item.productName}</CardContent>
                       <CardContent>{item.price} KD</CardContent>
                       <CardActions disableSpacing>
-                        <IconButton aria-label="add to favorites"></IconButton>
-                        <IconButton aria-label="share"></IconButton>
-
                         <Button
                           onClick={() => addToBill(item._id)}
                           size="small"
@@ -188,7 +185,7 @@ export default function Home() {
               </Grid>
             </div>
             <div className="sales-right">
-              <TableContainer component={Paper}>
+              <TableContainer component={Paper} style={{ maxHeight: 550 }}>
                 <Table sx={{ minWidth: 250 }} aria-label="simple table">
                   <TableHead>
                     <TableRow className="bill-table-row">

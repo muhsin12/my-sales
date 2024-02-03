@@ -5,6 +5,8 @@ const salesDetailsSchema = new Schema({
   itemName: String,
   price: Number,
   itemId: Schema.Types.ObjectId,
+  quantity: Number,
+  itemPrice: Number,
 });
 
 const SalesDetails =

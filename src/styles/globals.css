@@ -45,9 +45,11 @@ a {
 .item-card {
   width: 200px;
   text-align: center;
+  margin-top: 10px;
 }
 .main-grid-row {
   justify-content: space-evenly;
+  margin-left: 0 !important;
 }
 
 .cat-grid-row {
@@ -82,6 +84,27 @@ a {
   height: 30px;
   border-top: 2px solid;
   border-bottom: 2px solid;
+}
+.css-1rwjz6-MuiCardActions-root {
+  align-items: center;
+  justify-content: center;
+}
+.popup-header {
+  width: 100%;
+  height: 50px;
+}
+.header-left {
+  width: 93%;
+  height: 50px;
+  float: left;
+}
+.header-right {
+  width: 6%;
+  float: left;
+  height: 50px;
+}
+.css-17jjc08-MuiDataGrid-footerContainer {
+  background-color: #b2ebf2;
 }
 /* .mp-header {
   color: red;

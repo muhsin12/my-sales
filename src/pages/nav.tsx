@@ -66,7 +66,7 @@ function Nav() {
               textDecoration: "none",
             }}
           >
-            Kuwait Restaurant
+            Khalig Restaurant
           </Typography>
 
           <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />

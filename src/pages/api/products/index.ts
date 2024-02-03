@@ -1,30 +1,21 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
+const { connectToDatabase } = require("../db");
 import {
   readAllProducts,
   createProduct,
   updateProducts,
   deleteProducts,
 } from "../../../controllers/product-controller";
-import mongoose from "mongoose";
-
-mongoose.set("strictQuery", false);
 
 type Data = {
   name: string;
 };
 
-const mongoURI = `mongodb+srv://dlSales:dlSales@dl-sales.sst2qkr.mongodb.net/dlSales?retryWrites=true&w=majority`;
-
 export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  mongoose
-    .connect(mongoURI, {
-      retryWrites: true,
-      w: "majority",
-    })
+  connectToDatabase()
     .then(() => {
       console.log("connected to mongo db ");
       switch (req.method) {
@@ -42,7 +33,7 @@ export default function handler(
           break;
       }
     })
-    .catch((err) => {
+    .catch((err: any) => {
       console.log("this is mongo mmp error---", err);
     });
 }

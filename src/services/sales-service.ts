@@ -5,6 +5,8 @@ export const fetchSales = () => {
 };
 
 export const createSales = (dataBody: any, mode: boolean, salesId?: string) => {
+  console.log("databody=", dataBody);
+  console.log("mode=", mode);
   const salesMethod = !mode ? "POST" : "PATCH";
   return fetch(salesEndPoint, {
     method: salesMethod,
@@ -17,7 +19,7 @@ export const createSales = (dataBody: any, mode: boolean, salesId?: string) => {
   });
 };
 
-export const deleteItem = (salesId: string) => {
+export const deleteSales = (salesId: string) => {
   const deleteUrl = `${salesEndPoint}/?salesId=${salesId}`;
   return fetch(deleteUrl, {
     method: "DELETE",

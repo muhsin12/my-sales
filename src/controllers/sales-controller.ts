@@ -1,8 +1,34 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import mongoose from "mongoose";
+import Counter from "../models/counter-model";
 import Sales from "../models/sales-model";
 import SalesDetails from "../models/sales-details-model";
+import { deleteSalesDetail } from "./sales-details-controller";
 
+async function getNextSequence() {
+  try {
+    let seqId;
+
+    // Using await with findOneAndUpdate to make it asynchronous
+    const cd = await Counter.findOneAndUpdate(
+      { id: "salesId" },
+      { $inc: { seq: 1 } },
+      { new: true }
+    );
+    if (cd == null) {
+      const newVal = new Counter({ id: "salesId", seq: 100 });
+      await newVal.save();
+      seqId = 100;
+    } else {
+      seqId = cd.seq;
+    }
+
+    return seqId;
+  } catch (error) {
+    console.error(error);
+    throw error; // rethrow the error if needed
+  }
+}
 export async function createSales(req: NextApiRequest, res: NextApiResponse) {
   try {
     const salesData = req.body;
@@ -10,49 +36,45 @@ export async function createSales(req: NextApiRequest, res: NextApiResponse) {
       res.status(404).json({ error: "sales data not provided" });
     }
 
-    const salesInsertData = {
-      salesTotal: req.body.totalPrice,
-      salesDate: new Date(),
-    };
-    let salesDetails = req.body.details;
-    console.log("inside controller mp -- ", salesInsertData);
-
-    Sales.create(salesInsertData, (err: any, data: any) => {
-      if (err)
-        res.status(404).json({ error: "error while inserting Sales data" });
-      console.log("sales insertedd----", data);
-      //   return res.status(200).json(data);
-      let salesId = data._id;
-      let prodId = mongoose.Types.ObjectId;
-      salesDetails.forEach((el: any) => {
-        let salesDetailsData = {
+    getNextSequence()
+      .then((salesId) => {
+        console.log("result-", salesId);
+        const salesInsertData = {
+          salesTotal: req.body.totalPrice,
+          salesDate: new Date(),
           salesId: salesId,
-          itemId: new prodId(el.itemId),
-          itemName: el.itemName,
-          price: el.price,
         };
-        SalesDetails.create(salesDetailsData, (err: any, data: any) => {
-          console.log("sales details inserted----", data);
-          return res.status(200).json(data);
+        let salesDetails = req.body.details;
+        Sales.create(salesInsertData, (err: any, data: any) => {
+          console.log("my sales-mp--", data);
+          if (err)
+            res.status(404).json({ error: "error while inserting Sales data" });
+          let prodId = mongoose.Types.ObjectId;
+          let salesid = mongoose.Types.ObjectId;
+          salesDetails.forEach((el: any) => {
+            let salesDetailsData = {
+              salesId: new salesid(data._id),
+              itemId: new prodId(el.itemId),
+              itemName: el.itemName,
+              price: el.price,
+              quantity: el.quantity,
+              itemPrice: el.itemPrice,
+            };
+            console.log("sales details data----mp-", salesDetailsData);
+            SalesDetails.create(salesDetailsData, (err: any, data: any) => {
+              if (err) console.log("sales deail errrrror--", err);
+              console.log("after sales detail inserted-", data);
+            });
+          });
         });
+      })
+      .catch((error) => {
+        console.error(error);
       });
-    });
   } catch (error) {
     res.status(404).json({ error: "error while inserting Sales data" });
   }
 }
-
-// const readproduct = (req: Request, res: Response, next: NextFunction) => {
-//   const product_id = req.params.productId;
-//   return products
-//     .findById(product_id)
-//     .then((product) =>
-//       product
-//         ? res.status(200).json({ product })
-//         : res.status(400).json({ message: "product not found" })
-//     )
-//     .catch((error) => res.status(500).json({ error }));
-// };
 
 export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -103,19 +125,13 @@ export async function updateSales(req: NextApiRequest, res: NextApiResponse) {
 
 export async function deleteSales(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { productId } = req.query;
-    const deletedProduct = await Sales.findByIdAndDelete(productId);
-    return res.status(201).json({ message: deletedProduct });
+    const { salesId } = req.query;
+    const salesDetailDeleted = await deleteSalesDetail(salesId);
+    if (salesDetailDeleted) {
+      const deletedSalesRecord = await Sales.findByIdAndDelete(salesId);
+      return res.status(201).json({ message: deletedSalesRecord });
+    }
   } catch (error) {
     return res.status(404).json({ error: error });
   }
-
-  //   return Products
-  //     .findByIdAndDelete(customer_id)
-  //     .then((customer) =>
-  //       customer
-  //         ? res.status(201).json({ message: "customer deleted" })
-  //         : res.status(400).json({ message: "customer not found" })
-  //     )
-  //     .catch((error) => res.status(500).json({ error }));
 }

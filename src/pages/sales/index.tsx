@@ -18,8 +18,9 @@ import {
 import { useState, useEffect, useCallback } from "react";
 
 import Nav from "../nav";
-import ProductPopup from "@/components/product-popup.component";
-import { fetchSales } from "../../services/sales-service";
+import SalesPopup from "@/components/sales-popup.component";
+import { fetchSales, deleteSales } from "../../services/sales-service";
+import { fetchSalesDetails } from "../../services/sales-details-service";
 
 interface ISales {
   _id: string;
@@ -37,13 +38,13 @@ function generateRandom() {
   return retVal;
 }
 
-export default function Products() {
+export default function Sales() {
   const [salesData, setSalesData] = useState<ISales[]>([]);
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [recordForEdit, setRecordForEdit] = useState(null);
+  const [recordForEdit, setRecordForEdit] = useState([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [productId, setProductId] = useState("");
+  const [salesId, setSalesId] = useState("");
   const [totalSales, setTotalSales] = useState(0);
   const handleOpen = () => {
     setSaveSuccess(false);
@@ -68,7 +69,7 @@ export default function Products() {
 
   const columns: GridColDef[] = [
     {
-      field: "_id",
+      field: "salesId",
       headerName: "Sales Number",
       width: 250,
       editable: true,
@@ -91,7 +92,13 @@ export default function Products() {
       field: "Action",
       renderCell: (cellValues) => {
         return (
-          <Button variant="contained" color="error">
+          <Button
+            variant="contained"
+            color="error"
+            onClick={(event) => {
+              handleDeleteClick(event, cellValues);
+            }}
+          >
             Delete
           </Button>
         );
@@ -99,19 +106,19 @@ export default function Products() {
     },
   ];
 
-  //   const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
-  //     event.stopPropagation();
-  //     if (confirm("Are you Sure , Do you want to delete Product?")) {
-  //       deleteItem(cellValues.row._id)
-  //         .then((response) => {
-  //           console.log(response);
-  //           getAllProducts();
-  //         })
-  //         .catch((err) => {
-  //           console.log(err);
-  //         });
-  //     }
-  //   };
+  const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
+    event.stopPropagation();
+    if (confirm("Are you Sure , Do you want to delete this Sales?")) {
+      deleteSales(cellValues.row._id)
+        .then((response) => {
+          console.log(response);
+          getAllSales();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
 
   const getAllSales = () => {
     fetchSales()
@@ -125,12 +132,24 @@ export default function Products() {
     event.stopPropagation();
     handleOpen();
     setEditMode(true);
-    setProductId(params.row._id);
+    setSalesId(params.row._id);
+    fetchSalesDetails(params.row._id)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("salesDetails data in ff--", data);
+        setRecordForEdit(data);
+      });
     console.log(params.row);
-    setRecordForEdit(params.row);
     setSaveSuccess(false);
   };
 
+  const popUpPropps = {
+    open: open,
+    editMode: editMode,
+    handleClose: handleClose,
+    recordForEdit: recordForEdit,
+    saveSuccess: saveSuccess,
+  };
   return (
     <>
       <Nav />
@@ -164,6 +183,7 @@ export default function Products() {
             </TableBody>
           </Table>
         </Box>
+        <SalesPopup {...popUpPropps} />
       </Container>
     </>
   );
