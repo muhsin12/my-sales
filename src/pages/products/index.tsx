@@ -1,6 +1,14 @@
 import * as React from "react";
 import Container from "@mui/material/Container";
-import { Box, Button } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+} from "@mui/material";
 import {
   DataGrid,
   GridColDef,
@@ -13,6 +21,7 @@ import { useState, useEffect, useCallback } from "react";
 import Nav from "../nav";
 import ProductPopup from "@/components/product-popup.component";
 import { createItem, deleteItem, fetchItem } from "../../services/item-service";
+import { fetchCategories } from "../../services/category-service";
 
 interface Iproduct {
   _id: string;
@@ -20,6 +29,10 @@ interface Iproduct {
   price: number;
   description: string;
   categoryId: string;
+}
+interface Icategory {
+  _id: string;
+  categoryName: string;
 }
 
 function generateRandom() {
@@ -34,11 +47,14 @@ function generateRandom() {
 
 export default function Products() {
   const [productData, setProductData] = useState<Iproduct[]>([]);
+  const [productRawData, setProductRawData] = useState<Iproduct[]>([]);
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [recordForEdit, setRecordForEdit] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [productId, setProductId] = useState("");
+  const [categoryData, setCategoryData] = useState<Icategory[]>([]);
+  const [categoryId, setCategoryId] = useState("reset");
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -51,6 +67,7 @@ export default function Products() {
 
   useEffect(() => {
     getAllProducts();
+    getAllCategories();
   }, []);
 
   const columns: GridColDef[] = [
@@ -116,6 +133,14 @@ export default function Products() {
       .then((res) => res.json())
       .then((data) => {
         setProductData(data.products);
+        setProductRawData(data.products);
+      });
+  };
+  const getAllCategories = () => {
+    fetchCategories()
+      .then((res) => res.json())
+      .then((data) => {
+        setCategoryData(data.category);
       });
   };
 
@@ -145,6 +170,21 @@ export default function Products() {
     recordForEdit: recordForEdit,
     saveSuccess: saveSuccess,
   };
+  // filtering the expense
+  const filterProducts = (event: SelectChangeEvent) => {
+    console.log("change event-", event.target);
+    let categoryId = event.target.value;
+    if (categoryId != "reset") {
+      setCategoryId(categoryId);
+      const filteredProductData = productRawData.filter(
+        (el) => el.categoryId == categoryId
+      );
+      setProductData(filteredProductData);
+    } else {
+      setCategoryId("select category");
+      setProductData(productRawData);
+    }
+  };
 
   return (
     <>
@@ -158,6 +198,23 @@ export default function Products() {
           >
             ADD ITEM
           </Button>
+          <FormControl sx={{ m: 1, minWidth: 250 }}>
+            <InputLabel id="demo-simple-select-label">Category</InputLabel>
+            <Select
+              id="categoryId"
+              name="categoryId"
+              value={categoryId}
+              label="Select Category"
+              onChange={filterProducts}
+            >
+              <MenuItem value="reset">Select Category</MenuItem>
+              {categoryData.map((category: any) => (
+                <MenuItem key={category._id} value={category._id}>
+                  {category.categoryName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
         <Box sx={{ bgcolor: "white", height: "70vh" }}>
           <DataGrid

@@ -66,7 +66,7 @@ function Nav() {
               textDecoration: "none",
             }}
           >
-            Khalig Restaurant
+            Restaurant POC
           </Typography>
 
           <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />

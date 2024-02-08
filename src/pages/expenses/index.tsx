@@ -62,7 +62,7 @@ export default function Expenses() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [expenseId, setExpenseId] = useState("");
   const [categoryData, setCategoryData] = useState<Icategory[]>([]);
-  const [categoryId, setCategoryId] = useState("Select Category");
+  const [categoryId, setCategoryId] = useState("reset");
   const [expenseTotal, setExpenseTotal] = useState(0);
   const handleOpen = () => {
     setSaveSuccess(false);
@@ -85,13 +85,16 @@ export default function Expenses() {
     getAllCategories();
     getAllExpenses();
   }, []);
-  useEffect(() => {
-    const sum = expenseRawData.reduce((accumulator, object) => {
+
+  //find total
+  const findTotalExpenses = (expenses: any) => {
+    const sum = expenses.reduce((accumulator: any, object: any) => {
       return accumulator + object.price;
     }, 0);
     setExpenseTotal(sum);
-  }, [expenseRawData]);
+  };
 
+  //definition of purchase grid
   const columns: GridColDef[] = [
     {
       field: "purchaseName",
@@ -135,6 +138,8 @@ export default function Expenses() {
       },
     },
   ];
+
+  //definition of total grid
   const totalColumns: GridColDef[] = [
     {
       field: "totalExpensePrice",
@@ -144,6 +149,7 @@ export default function Expenses() {
     },
   ];
 
+  // handle delete click
   const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
     event.stopPropagation();
     if (confirm("Are you Sure , Do you want to delete this purchase?")) {
@@ -158,15 +164,18 @@ export default function Expenses() {
     }
   };
 
+  //find all expense
   const getAllExpenses = () => {
     fetchPurchases()
       .then((res) => res.json())
       .then((data) => {
         setExpenseData(data.purchases);
         setExpenseRawData(data.purchases);
+        findTotalExpenses(data.purchases);
       });
   };
 
+  //handle row click for popup opening
   const handleRowClick: GridEventListener<"rowClick"> = (params, event) => {
     event.stopPropagation();
     handleOpen();
@@ -177,6 +186,7 @@ export default function Expenses() {
     setSaveSuccess(false);
   };
 
+  // submitting the purchase form
   const purchaseFormSubmit = (formData: any) => {
     createPurchase(formData, editMode, expenseId).then((res) => {
       getAllExpenses();
@@ -185,6 +195,7 @@ export default function Expenses() {
     });
   };
 
+  //properties for  popup component
   const popUpPropps = {
     open: open,
     editMode: editMode,
@@ -193,16 +204,22 @@ export default function Expenses() {
     recordForEdit: recordForEdit,
     saveSuccess: saveSuccess,
   };
+
+  // filtering the expense
   const filterExpenses = (event: SelectChangeEvent) => {
     console.log("change event-", event.target);
     let categoryId = event.target.value;
     if (categoryId != "reset") {
       setCategoryId(categoryId);
-      setExpenseData(
-        expenseRawData.filter((el) => el.categoryId == categoryId)
+      const filteredExpenseData = expenseRawData.filter(
+        (el) => el.categoryId == categoryId
       );
+      setExpenseData(filteredExpenseData);
+      findTotalExpenses(filteredExpenseData);
     } else {
+      setCategoryId("select category");
       setExpenseData(expenseRawData);
+      findTotalExpenses(expenseRawData);
     }
   };
 
@@ -223,11 +240,11 @@ export default function Expenses() {
             <Select
               id="categoryId"
               name="categoryId"
-              value="category"
+              value={categoryId}
               label="Select Category"
               onChange={filterExpenses}
             >
-              <MenuItem value="reset">Reset</MenuItem>
+              <MenuItem value="reset">Select Category</MenuItem>
               {categoryData.map((category: any) => (
                 <MenuItem key={category._id} value={category._id}>
                   {category.categoryName}

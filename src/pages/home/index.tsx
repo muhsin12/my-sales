@@ -145,10 +145,15 @@ export default function Home() {
     <>
       <Nav />
       <Container maxWidth="xl">
-        <Box sx={{ bgcolor: "#b2ebf2", height: "100px" }}>
-          <Grid container spacing={2} className="cat-grid-row">
+        <Box sx={{ bgcolor: "#b2ebf2", height: "100px", overflowX: "auto" }}>
+          <Grid
+            container
+            spacing={2}
+            className="cat-grid-row"
+            sx={{ display: "flex", flexWrap: "nowrap", padding: "8px" }}
+          >
             {categories.map((cat: any) => (
-              <Grid key={cat._id} xs={2} className="category-grid">
+              <Grid key={cat._id} item>
                 <Button
                   variant="outlined"
                   size="large"
@@ -161,6 +166,7 @@ export default function Home() {
             ))}
           </Grid>
         </Box>
+
         <Box sx={{ bgcolor: "white", height: "70vh" }}>
           <div className="sales-wrapper">
             <div className="sales-left">

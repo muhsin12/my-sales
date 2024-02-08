@@ -54,12 +54,13 @@ export async function updatePurchases(
   res: NextApiResponse
 ) {
   const { purchaseId } = req.body;
-  const { purchaseName, description, price } = req.body;
+  const { purchaseName, description, price, categoryId } = req.body;
 
   const modifiedpurchaseDetail = {
     purchaseName,
     description,
     price,
+    categoryId,
   };
   try {
     const updatePurchases = await Purchases.findByIdAndUpdate(

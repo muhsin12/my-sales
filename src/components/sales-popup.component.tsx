@@ -17,10 +17,11 @@ function SalesPopup(props: any) {
     const left = 50;
 
     return {
-      top: `${top}%`,
       margin: "auto",
-      left: `${left}%`,
+      width: "600px",
+      height: "350px",
       transform: `translate(-${top}%, -${left}%)`,
+      inset: "50% 0 30% 30%",
     };
   }
   console.log("sales details props--", props.recordForEdit);

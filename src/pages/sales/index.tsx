@@ -124,6 +124,17 @@ export default function Sales() {
     fetchSales()
       .then((res) => res.json())
       .then((data) => {
+        const modifiedSalesData = data.sales.map((sale: any) => {
+          // Assuming sale.salesDate is the property containing the sales date
+          // Parse the current salesDate to a Date object
+          const salesDate = new Date(sale.salesDate);
+          const updatedDateString = `${
+            sale.salesDate.split("T")[0]
+          }  ${sale.salesDate.split("T")[1].split(".")[0].substring(0, 5)}`;
+          sale.salesDate = updatedDateString; // Convert back to ISO string format
+          return sale;
+        });
+
         setSalesData(data.sales);
       });
   };

@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import mongoose from "mongoose";
 import Products from "../models/product-model";
 
 export async function createProduct(req: NextApiRequest, res: NextApiResponse) {
@@ -9,15 +8,12 @@ export async function createProduct(req: NextApiRequest, res: NextApiResponse) {
       res.status(404).json({ error: "product data not provided" });
     }
 
-    let catid = mongoose.Types.ObjectId;
     const productInsertData = {
       productName: req.body.productName,
       price: req.body.price,
       description: req.body.description,
-      categoryId: new catid(req.body.categoryId),
+      categoryId: req.body.categoryId,
     };
-
-    console.log("inside controller mp -- ", productInsertData);
 
     Products.create(productInsertData, (err: any, data: any) => {
       if (err)
@@ -28,18 +24,6 @@ export async function createProduct(req: NextApiRequest, res: NextApiResponse) {
     res.status(404).json({ error: "error while inserting product data" });
   }
 }
-
-// const readproduct = (req: Request, res: Response, next: NextFunction) => {
-//   const product_id = req.params.productId;
-//   return products
-//     .findById(product_id)
-//     .then((product) =>
-//       product
-//         ? res.status(200).json({ product })
-//         : res.status(400).json({ message: "product not found" })
-//     )
-//     .catch((error) => res.status(500).json({ error }));
-// };
 
 export async function readAllProducts(
   req: NextApiRequest,
@@ -63,12 +47,13 @@ export async function updateProducts(
   res: NextApiResponse
 ) {
   const { productId } = req.body;
-  const { productName, description, price } = req.body;
+  const { productName, description, price, categoryId } = req.body;
 
   const modifiedProductDetail = {
     productName,
     description,
     price,
+    categoryId,
   };
   try {
     const updateProducts = await Products.findByIdAndUpdate(
@@ -92,13 +77,4 @@ export async function deleteProducts(
   } catch (error) {
     return res.status(404).json({ error: error });
   }
-
-  //   return Products
-  //     .findByIdAndDelete(customer_id)
-  //     .then((customer) =>
-  //       customer
-  //         ? res.status(201).json({ message: "customer deleted" })
-  //         : res.status(400).json({ message: "customer not found" })
-  //     )
-  //     .catch((error) => res.status(500).json({ error }));
 }
