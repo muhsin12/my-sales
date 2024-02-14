@@ -1,4 +1,5 @@
-const productEndPoint = "http://localhost:3000/api/products";
+const { END_POINT } = require("../config");
+const productEndPoint = END_POINT.PRODUCT;
 
 export const fetchItem = () => {
   return fetch(productEndPoint, { method: "GET" });

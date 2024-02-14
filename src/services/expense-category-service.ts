@@ -1,7 +1,8 @@
-const categoryEndPoint = "http://localhost:3000/api/purchase-category";
+const { END_POINT } = require("../config");
+const expenseCategoryEndPoint = END_POINT.EXPENSE_CATEGORY;
 
 export const fetchCategories = () => {
-  return fetch(categoryEndPoint, { method: "GET" });
+  return fetch(expenseCategoryEndPoint, { method: "GET" });
 };
 
 export const createCategory = (
@@ -10,7 +11,7 @@ export const createCategory = (
   categoryId?: string
 ) => {
   const categoryMethod = !mode ? "POST" : "PATCH";
-  return fetch(categoryEndPoint, {
+  return fetch(expenseCategoryEndPoint, {
     method: categoryMethod,
     headers: {
       "Content-Type": "application/json",
@@ -22,7 +23,7 @@ export const createCategory = (
 };
 
 export const deleteCategory = (categoryId: string) => {
-  const deleteUrl = `${categoryEndPoint}/?categoryId=${categoryId}`;
+  const deleteUrl = `${expenseCategoryEndPoint}/?categoryId=${categoryId}`;
   return fetch(deleteUrl, {
     method: "DELETE",
   });

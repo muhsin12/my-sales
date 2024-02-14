@@ -1,4 +1,5 @@
-const salesEndPoint = "http://localhost:3000/api/sales";
+const { END_POINT } = require("../config");
+const salesEndPoint = END_POINT.SALES;
 
 export const fetchSales = () => {
   return fetch(salesEndPoint, { method: "GET" });

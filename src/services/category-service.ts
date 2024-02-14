@@ -1,4 +1,5 @@
-const categoryEndPoint = "http://localhost:3000/api/category";
+const { END_POINT } = require("../config");
+const categoryEndPoint = END_POINT.PRODUCT_CATEGORY;
 
 export const fetchCategories = () => {
   return fetch(categoryEndPoint, { method: "GET" });
@@ -9,6 +10,7 @@ export const createCategory = (
   mode: boolean,
   categoryId?: string
 ) => {
+  console.log("categroy end point-----", categoryEndPoint);
   const categoryMethod = !mode ? "POST" : "PATCH";
   return fetch(categoryEndPoint, {
     method: categoryMethod,

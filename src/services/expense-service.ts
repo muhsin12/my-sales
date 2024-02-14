@@ -1,4 +1,5 @@
-const purcaseEndPoint = "http://localhost:3000/api/purchases";
+const { END_POINT } = require("../config");
+const purcaseEndPoint = END_POINT.EXPENSE;
 
 export const fetchPurchases = () => {
   return fetch(purcaseEndPoint, { method: "GET" });

@@ -1,6 +1,6 @@
 // db.js
 const mongoose = require("mongoose");
-const { DB_URI } = require("./config"); // Your database URI
+const { DB_URI } = require("../../config"); // Your database URI
 
 let isConnected = false;
 
