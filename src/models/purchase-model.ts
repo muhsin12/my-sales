@@ -5,6 +5,7 @@ const PurchaseSchema = new Schema({
   price: Number,
   description: String,
   categoryId: Schema.Types.ObjectId,
+  purchaseDate: Schema.Types.Date,
 });
 
 const Purchases = models.purchases || model("purchases", PurchaseSchema);

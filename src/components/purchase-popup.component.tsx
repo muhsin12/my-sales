@@ -14,14 +14,16 @@ import { fetchCategories } from "../services/expense-category-service";
 function PurchasePopup(props: any) {
   const [categoryList, setCategoryList] = useState([]);
   function getModalStyle() {
-    const top = 50;
-    const left = 50;
+    const top = 0;
+    const left = 0;
 
     return {
       top: `${top}%`,
       margin: "auto",
       left: `${left}%`,
       transform: `translate(-${top}%, -${left}%)`,
+      height: "535px",
+      width: "500px",
     };
   }
 
@@ -30,12 +32,14 @@ function PurchasePopup(props: any) {
     description: string;
     price: number;
     categoryId: string;
+    purchaseDate: string;
   }
   const initialValues: IpurchaseForm = {
     purchaseName: "",
     description: "",
     price: 0,
     categoryId: "",
+    purchaseDate: "",
   };
   const [values, setValues] = useState<IpurchaseForm>(initialValues);
   const [errors, setErrors] = useState<any>(null);
@@ -71,7 +75,7 @@ function PurchasePopup(props: any) {
   const validate = () => {
     let tmp: any = {};
     tmp.purchaseName = values.purchaseName ? "" : "Purchase Name is required";
-    tmp.price = values.price ? "" : "Price is required";
+    tmp.price = values.price ? 0 : "Price is required";
     setErrors({ ...tmp });
     return Object.values(tmp).every((x) => x == "");
   };
@@ -95,8 +99,9 @@ function PurchasePopup(props: any) {
         component="form"
         name="puchaseForm"
         sx={{
-          "& .MuiTextField-root": { mt: 2, p: 1, width: "95%" },
-          height: "500px",
+          "& .MuiTextField-root": { mt: 2, p: 1, width: "65%" },
+          height: "535px",
+          width: "500px",
           backgroundColor: "#b2ebf2",
         }}
         noValidate
@@ -157,6 +162,21 @@ function PurchasePopup(props: any) {
             value={values.price}
             onChange={handleInputChange}
             {...(errors && { error: true, helperText: errors.price })}
+          />
+        </div>
+        <div className="formFieldContainer">
+          <TextField
+            sx={{ m: 1, minWidth: 250 }}
+            id="purchaseDate"
+            name="purchaseDate"
+            label="purchase Date"
+            type="date"
+            value={values.purchaseDate}
+            onChange={handleInputChange}
+            {...(errors && { error: true, helperText: errors.price })}
+            InputLabelProps={{
+              shrink: true,
+            }}
           />
         </div>
 

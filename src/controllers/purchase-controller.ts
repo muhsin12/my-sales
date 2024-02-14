@@ -18,6 +18,7 @@ export async function createPurchase(
       price: req.body.price,
       description: req.body.description,
       categoryId: req.body.categoryId,
+      purchaseDate: req.body.purchaseDate,
     };
 
     console.log("inside controller mp -- ", purchaseInsertData);
@@ -37,13 +38,34 @@ export async function readAllPurchases(
   res: NextApiResponse
 ) {
   try {
-    const purchases = await Purchases.find();
+    const { firstDate, lastDate } = req.query;
+    if (firstDate && lastDate) {
+      const startDate = new Date(firstDate.toString());
+      const endDate = new Date(lastDate.toString());
+      const dateRangePurcahses = await Purchases.find({
+        purchaseDate: { $gte: startDate, $lte: endDate },
+      });
 
-    if (!purchases) {
-      return res.status(404).json({ error: "purchases not found" });
+      console.log("muhsin-date--", startDate);
+      console.log("specificDatePurchases---", dateRangePurcahses);
+      res.status(200);
+      return res.json({ dateRangePurcahses });
+    } else if (firstDate && lastDate == undefined) {
+      const specDate = new Date(firstDate.toString());
+      const specificDatePurchases = await Purchases.find({
+        purchaseDate: { $eq: specDate },
+      });
+      res.status(200);
+      return res.json({ specificDatePurchases });
+    } else {
+      const purchases = await Purchases.find();
+
+      if (!purchases) {
+        return res.status(404).json({ error: "purchases not found" });
+      }
+      res.status(200);
+      return res.json({ purchases });
     }
-    res.status(200);
-    return res.json({ purchases });
   } catch (error) {
     res.status(404).json({ error: "error while fetching purchases" });
   }
@@ -83,5 +105,22 @@ export async function deletepurchases(
     return res.status(201).json({ message: deletedPurchase });
   } catch (error) {
     return res.status(404).json({ error: error });
+  }
+}
+
+export async function readAllPurchasesForAdate(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  try {
+    const purchases = await Purchases.find();
+
+    if (!purchases) {
+      return res.status(404).json({ error: "purchases not found" });
+    }
+    res.status(200);
+    return res.json({ purchases });
+  } catch (error) {
+    res.status(404).json({ error: "error while fetching purchases" });
   }
 }
