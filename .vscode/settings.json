@@ -1,0 +1,5 @@
+{
+  "appService.zipIgnorePattern": ["node_modules{,/**}", ".vscode{,/**}"],
+  "appService.defaultWebAppToDeploy": "/subscriptions/4ce8fe9e-2dda-4f15-b25d-1472b3162a99/resourceGroups/appsvc_linux_centralus_basic/providers/Microsoft.Web/sites/khalig",
+  "appService.deploySubpath": "."
+}
