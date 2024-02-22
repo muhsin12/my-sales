@@ -72,6 +72,7 @@ export default function Expenses() {
     setOpen(false);
     setEditMode(false);
     setSaveSuccess(true);
+    setRecordForEdit(null);
   };
 
   const getAllCategories = () => {
@@ -116,8 +117,8 @@ export default function Expenses() {
       editable: true,
     },
     {
-      field: "categoryName",
-      headerName: "Category Name",
+      field: "purchaseDate",
+      headerName: "Expense Date",
       width: 110,
       editable: true,
     },
@@ -168,7 +169,12 @@ export default function Expenses() {
   const getAllExpenses = () => {
     fetchPurchases()
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: any) => {
+        data.purchases.map((expense: any) => {
+          const updateDate = expense?.purchaseDate?.split("T")[0];
+          expense.purchaseDate = updateDate;
+          return expense;
+        });
         setExpenseData(data.purchases);
         setExpenseRawData(data.purchases);
         findTotalExpenses(data.purchases);
@@ -192,6 +198,7 @@ export default function Expenses() {
       getAllExpenses();
       handleClose();
       setEditMode(false);
+      setRecordForEdit(null);
     });
   };
 

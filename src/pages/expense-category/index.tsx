@@ -142,7 +142,7 @@ export default function ExpenseCategory() {
             style={{ background: "#00838f", color: "white", marginTop: "5px" }}
             onClick={handleOpen}
           >
-            ADD Purcahse Category
+            ADD Expense Category
           </Button>
         </Box>
         <Box sx={{ bgcolor: "white", height: "70vh" }}>

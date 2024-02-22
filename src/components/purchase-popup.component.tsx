@@ -45,23 +45,23 @@ function PurchasePopup(props: any) {
   const [errors, setErrors] = useState<any>(null);
 
   useEffect(() => {
+    // Fetch categories when the component mounts
     fetchCategories()
       .then((res) => res.json())
       .then((data) => {
         setCategoryList(data.category);
       });
-  }, []);
 
-  useEffect(() => {
+    // Set values if props.recordForEdit changes
     if (props.recordForEdit != null) {
       setValues(props.recordForEdit);
     }
-  }, [props.recordForEdit]);
-  useEffect(() => {
+
+    // Reset form values if props.saveSuccess changes
     if (props.saveSuccess) {
       resetFormValues();
     }
-  }, [props.saveSuccess]);
+  }, [props.recordForEdit, props.saveSuccess]);
 
   const resetFormValues = () => {
     setValues({ ...initialValues });
@@ -74,8 +74,10 @@ function PurchasePopup(props: any) {
 
   const validate = () => {
     let tmp: any = {};
-    tmp.purchaseName = values.purchaseName ? "" : "Purchase Name is required";
+    tmp.categoryId = values.categoryId ? "" : "Expense Category is required";
+    tmp.purchaseName = values.purchaseName ? "" : "Expense Name is required";
     tmp.price = values.price ? 0 : "Price is required";
+    tmp.purchaseDate = values.purchaseDate ? "" : "Expense Date is required";
     setErrors({ ...tmp });
     return Object.values(tmp).every((x) => x == "");
   };
@@ -110,9 +112,12 @@ function PurchasePopup(props: any) {
       >
         <h3 className="title">{title}</h3>
         <div className="formFieldContainer">
-          <FormControl sx={{ m: 1, minWidth: 250 }}>
+          <FormControl
+            sx={{ m: 1, minWidth: 250 }}
+            {...(errors && { error: true, helperText: errors.categoryId })}
+          >
             <InputLabel id="demo-simple-select-label">
-              Purchase Category
+              Expense Category
             </InputLabel>
             <Select
               id="categoryId"
@@ -120,6 +125,7 @@ function PurchasePopup(props: any) {
               value={values.categoryId}
               label="Category"
               onChange={handleInputChange}
+              {...(errors && { error: true, helperText: errors.categoryId })}
             >
               {categoryList.map((category: any) => (
                 <MenuItem key={category._id} value={category._id}>
@@ -173,7 +179,7 @@ function PurchasePopup(props: any) {
             type="date"
             value={values.purchaseDate}
             onChange={handleInputChange}
-            {...(errors && { error: true, helperText: errors.price })}
+            {...(errors && { error: true, helperText: errors.purchaseDate })}
             InputLabelProps={{
               shrink: true,
             }}

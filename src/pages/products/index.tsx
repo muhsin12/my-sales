@@ -63,6 +63,7 @@ export default function Products() {
     setOpen(false);
     setEditMode(false);
     setSaveSuccess(true);
+    setRecordForEdit(null);
   };
 
   useEffect(() => {
@@ -159,6 +160,7 @@ export default function Products() {
       getAllProducts();
       handleClose();
       setEditMode(false);
+      setRecordForEdit(null);
     });
   };
 
