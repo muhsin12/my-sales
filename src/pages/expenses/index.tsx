@@ -214,7 +214,6 @@ export default function Expenses() {
 
   // filtering the expense
   const filterExpenses = (event: SelectChangeEvent) => {
-    console.log("change event-", event.target);
     let categoryId = event.target.value;
     if (categoryId != "reset") {
       setCategoryId(categoryId);
