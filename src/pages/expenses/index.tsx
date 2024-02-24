@@ -12,6 +12,7 @@ import {
   TableBody,
   TableCell,
   TableRow,
+  TextField,
 } from "@mui/material";
 import {
   DataGrid,
@@ -28,6 +29,7 @@ import {
   createPurchase,
   deletePurchase,
   fetchPurchases,
+  searchPurchases,
 } from "../../services/expense-service";
 import { fetchCategories } from "../../services/expense-category-service";
 
@@ -62,8 +64,10 @@ export default function Expenses() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [expenseId, setExpenseId] = useState("");
   const [categoryData, setCategoryData] = useState<Icategory[]>([]);
-  const [categoryId, setCategoryId] = useState("reset");
+  const [categoryId, setCategoryId] = useState("");
   const [expenseTotal, setExpenseTotal] = useState(0);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -89,7 +93,7 @@ export default function Expenses() {
 
   //find total
   const findTotalExpenses = (expenses: any) => {
-    const sum = expenses.reduce((accumulator: any, object: any) => {
+    const sum = expenses?.reduce((accumulator: any, object: any) => {
       return accumulator + object.price;
     }, 0);
     setExpenseTotal(sum);
@@ -170,14 +174,16 @@ export default function Expenses() {
     fetchPurchases()
       .then((res) => res.json())
       .then((data: any) => {
-        data.purchases.map((expense: any) => {
-          const updateDate = expense?.purchaseDate?.split("T")[0];
-          expense.purchaseDate = updateDate;
-          return expense;
-        });
-        setExpenseData(data.purchases);
-        setExpenseRawData(data.purchases);
-        findTotalExpenses(data.purchases);
+        if (data?.purchases) {
+          data?.purchases?.map((expense: any) => {
+            const updateDate = expense?.purchaseDate?.split("T")[0];
+            expense.purchaseDate = updateDate;
+            return expense;
+          });
+          setExpenseData(data?.purchases);
+          setExpenseRawData(data?.purchases);
+          findTotalExpenses(data?.purchases);
+        }
       });
   };
 
@@ -212,21 +218,26 @@ export default function Expenses() {
     saveSuccess: saveSuccess,
   };
 
-  // filtering the expense
-  const filterExpenses = (event: SelectChangeEvent) => {
-    let categoryId = event.target.value;
-    if (categoryId != "reset") {
-      setCategoryId(categoryId);
-      const filteredExpenseData = expenseRawData.filter(
-        (el) => el.categoryId == categoryId
-      );
-      setExpenseData(filteredExpenseData);
-      findTotalExpenses(filteredExpenseData);
-    } else {
-      setCategoryId("select category");
-      setExpenseData(expenseRawData);
-      findTotalExpenses(expenseRawData);
-    }
+  const handleSearch = () => {
+    const filterObj = {
+      fromDate,
+      toDate,
+      categoryId,
+    };
+    searchPurchases(filterObj)
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data?.purchases) {
+          data?.purchases?.map((expense: any) => {
+            const updateDate = expense?.purchaseDate?.split("T")[0];
+            expense.purchaseDate = updateDate;
+            return expense;
+          });
+          setExpenseData(data?.purchases);
+          setExpenseRawData(data?.purchases);
+          findTotalExpenses(data?.purchases);
+        }
+      });
   };
 
   return (
@@ -236,7 +247,7 @@ export default function Expenses() {
         <Box sx={{ bgcolor: "#b2ebf2", height: "70px" }}>
           <Button
             variant="outlined"
-            style={{ background: "#00838f", color: "white", marginTop: "5px" }}
+            style={{ background: "#00838f", color: "white", marginTop: "15px" }}
             onClick={handleOpen}
           >
             ADD Expense
@@ -248,7 +259,7 @@ export default function Expenses() {
               name="categoryId"
               value={categoryId}
               label="Select Category"
-              onChange={filterExpenses}
+              onChange={(e) => setCategoryId(e.target.value)}
             >
               <MenuItem value="reset">Select Category</MenuItem>
               {categoryData.map((category: any) => (
@@ -257,6 +268,45 @@ export default function Expenses() {
                 </MenuItem>
               ))}
             </Select>
+          </FormControl>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="fromDate"
+              name="fromDate"
+              label="From Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="toDate"
+              name="toDate"
+              label="To Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <Button
+              variant="outlined"
+              style={{
+                background: "#00838f",
+                color: "white",
+                marginTop: "15px",
+              }}
+              onClick={handleSearch}
+            >
+              Search
+            </Button>
           </FormControl>
         </Box>
         <Box sx={{ bgcolor: "white", height: "70vh" }}>

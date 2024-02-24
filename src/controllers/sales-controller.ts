@@ -76,30 +76,44 @@ export async function createSales(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
+// Function to retrieve sales within a date range
+async function getSalesInDateRange(startDate: Date, endDate: Date) {
+  return await Sales.find({
+    salesDate: { $gte: startDate, $lte: endDate },
+  });
+}
+
+// Function to retrieve all purchases
+async function getAllSales() {
+  return await Sales.find();
+}
+// read all sales
 export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
+  console.log("reqest object url---", req.url);
   try {
-    // const agg = [
-    //   {
-    //     $lookup: {
-    //       from: "categories",
-    //       localField: "categoryId",
-    //       foreignField: "_id",
-    //       as: "productCategory",
-    //     },
-    //   },
-    // ];
+    // Extract date range parameters from request query
+    const { firstDate, lastDate } = req.query;
+    let queryResult;
+    if (firstDate && lastDate) {
+      console.log("aaaaa");
+      // Retrieve purchases for a specific date
+      const startDate = new Date(firstDate.toString());
+      const endDate = new Date(lastDate.toString());
+      queryResult = await getSalesInDateRange(startDate, endDate);
+    } else {
+      console.log("bbbbb");
+      // Retrieve all purchases if no date range is specified
+      queryResult = await getAllSales();
+    }
 
-    // const products = await Sales.aggregate(agg);
-
-    const sales = await Sales.find();
-
-    if (!sales) {
+    if (!queryResult || queryResult.length === 0) {
       return res.status(404).json({ error: "Sales not found" });
     }
-    res.status(200);
-    return res.json({ sales });
+
+    res.status(200).json({ sales: queryResult });
   } catch (error) {
-    res.status(404).json({ error: "error while fetching Sales" });
+    // Return an error response if an exception occurs
+    res.status(404).json({ error: "error while fetching sales" });
   }
 }
 

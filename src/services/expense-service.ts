@@ -5,6 +5,22 @@ export const fetchPurchases = () => {
   return fetch(purcaseEndPoint, { method: "GET" });
 };
 
+export const searchPurchases = (params: any) => {
+  let searchUrl = purcaseEndPoint;
+  if (params.fromDate && params.toDate && params.categoryId) {
+    searchUrl = `${purcaseEndPoint}?firstDate=${params.fromDate}&lastDate=${params.toDate}&categoryId=${params.categoryId}`;
+  } else if (params.fromDate && params.toDate && params.categoryId == "") {
+    searchUrl = `${purcaseEndPoint}?firstDate=${params.fromDate}&lastDate=${params.toDate}`;
+  } else if (
+    params.categoryId &&
+    params.fromDate == "" &&
+    params.toDate == ""
+  ) {
+    searchUrl = `${purcaseEndPoint}?categoryId=${params.categoryId}`;
+  }
+  return fetch(searchUrl, { method: "GET" });
+};
+
 export const createPurchase = (
   dataBody: any,
   mode: boolean,

@@ -6,8 +6,6 @@ export const fetchSales = () => {
 };
 
 export const createSales = (dataBody: any, mode: boolean, salesId?: string) => {
-  console.log("databody=", dataBody);
-  console.log("mode=", mode);
   const salesMethod = !mode ? "POST" : "PATCH";
   return fetch(salesEndPoint, {
     method: salesMethod,
@@ -25,4 +23,12 @@ export const deleteSales = (salesId: string) => {
   return fetch(deleteUrl, {
     method: "DELETE",
   });
+};
+
+export const searchSales = (params: any) => {
+  let searchUrl = salesEndPoint;
+  if (params.fromDate && params.toDate) {
+    searchUrl = `${salesEndPoint}?firstDate=${params.fromDate}&lastDate=${params.toDate}`;
+  }
+  return fetch(searchUrl, { method: "GET" });
 };

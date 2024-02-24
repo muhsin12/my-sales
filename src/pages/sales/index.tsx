@@ -7,6 +7,8 @@ import {
   TableBody,
   TableCell,
   TableRow,
+  FormControl,
+  TextField,
 } from "@mui/material";
 import {
   DataGrid,
@@ -19,7 +21,11 @@ import { useState, useEffect, useCallback } from "react";
 
 import Nav from "../nav";
 import SalesPopup from "@/components/sales-popup.component";
-import { fetchSales, deleteSales } from "../../services/sales-service";
+import {
+  fetchSales,
+  deleteSales,
+  searchSales,
+} from "../../services/sales-service";
 import { fetchSalesDetails } from "../../services/sales-details-service";
 
 interface ISales {
@@ -46,6 +52,8 @@ export default function Sales() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [salesId, setSalesId] = useState("");
   const [totalSales, setTotalSales] = useState(0);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -120,22 +128,26 @@ export default function Sales() {
     }
   };
 
+  //formatting date
+  const formatDate = (date: string) => {
+    return `${date.split("T")[0]}  ${date
+      .split("T")[1]
+      .split(".")[0]
+      .substring(0, 5)}`;
+  };
+
   const getAllSales = () => {
     fetchSales()
       .then((res) => res.json())
       .then((data) => {
-        const modifiedSalesData = data.sales.map((sale: any) => {
-          // Assuming sale.salesDate is the property containing the sales date
-          // Parse the current salesDate to a Date object
-          const salesDate = new Date(sale.salesDate);
-          const updatedDateString = `${
-            sale.salesDate.split("T")[0]
-          }  ${sale.salesDate.split("T")[1].split(".")[0].substring(0, 5)}`;
-          sale.salesDate = updatedDateString; // Convert back to ISO string format
-          return sale;
-        });
-
-        setSalesData(data.sales);
+        if (data.sales) {
+          data.sales.map((sale: any) => {
+            const updatedDateString = formatDate(sale.salesDate);
+            sale.salesDate = updatedDateString;
+            return sale;
+          });
+          setSalesData(data.sales);
+        }
       });
   };
 
@@ -147,11 +159,29 @@ export default function Sales() {
     fetchSalesDetails(params.row._id)
       .then((res) => res.json())
       .then((data) => {
-        console.log("salesDetails data in ff--", data);
         setRecordForEdit(data);
       });
     console.log(params.row);
     setSaveSuccess(false);
+  };
+
+  const handleSearch = () => {
+    const filterObj = {
+      fromDate,
+      toDate,
+    };
+    searchSales(filterObj)
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data.sales) {
+          data.sales.map((sale: any) => {
+            const updateDate = formatDate(sale.salesDate);
+            sale.sale = updateDate;
+            return sale;
+          });
+          setSalesData(data.sales);
+        }
+      });
   };
 
   const popUpPropps = {
@@ -165,7 +195,47 @@ export default function Sales() {
     <>
       <Nav />
       <Container maxWidth="xl">
-        <Box sx={{ bgcolor: "#b2ebf2", height: "50px" }}></Box>
+        <Box sx={{ bgcolor: "#b2ebf2", height: "70px" }}>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="fromDate"
+              name="fromDate"
+              label="From Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="toDate"
+              name="toDate"
+              label="To Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <Button
+              variant="outlined"
+              style={{
+                background: "#00838f",
+                color: "white",
+                marginTop: "15px",
+              }}
+              onClick={handleSearch}
+            >
+              Search
+            </Button>
+          </FormControl>
+        </Box>
         <Box sx={{ bgcolor: "white", height: "70vh" }}>
           <DataGrid
             onRowClick={handleRowClick}
