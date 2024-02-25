@@ -17,10 +17,11 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 import Nav from "../nav";
 import SalesPopup from "@/components/sales-popup.component";
+import ConfirmBox from "@/components/confirm-popup.component";
 import {
   fetchSales,
   deleteSales,
@@ -54,6 +55,8 @@ export default function Sales() {
   const [totalSales, setTotalSales] = useState(0);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -104,7 +107,7 @@ export default function Sales() {
             variant="contained"
             color="error"
             onClick={(event) => {
-              handleDeleteClick(event, cellValues);
+              handleOpenDialog(event, cellValues);
             }}
           >
             Delete
@@ -114,18 +117,15 @@ export default function Sales() {
     },
   ];
 
-  const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
-    event.stopPropagation();
-    if (confirm("Are you Sure , Do you want to delete this Sales?")) {
-      deleteSales(cellValues.row._id)
-        .then((response) => {
-          console.log(response);
-          getAllSales();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
+  const handleDeleteClick = (recordId: string) => {
+    deleteSales(recordId)
+      .then((response) => {
+        console.log(response);
+        getAllSales();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   //formatting date
@@ -173,13 +173,15 @@ export default function Sales() {
     searchSales(filterObj)
       .then((res) => res.json())
       .then((data: any) => {
-        if (data.sales) {
+        if (data?.sales) {
           data.sales.map((sale: any) => {
             const updateDate = formatDate(sale.salesDate);
-            sale.sale = updateDate;
+            sale.salesDate = updateDate;
             return sale;
           });
           setSalesData(data.sales);
+        } else {
+          setSalesData([]);
         }
       });
   };
@@ -191,10 +193,35 @@ export default function Sales() {
     recordForEdit: recordForEdit,
     saveSuccess: saveSuccess,
   };
+
+  const handleOpenDialog = (event: any, cellValues: GridRenderCellParams) => {
+    event.stopPropagation();
+    setRecordIdToDelete(cellValues.row._id);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    if (recordIdToDelete !== null) {
+      // Call your delete record API with recordIdToDelete
+      handleDeleteClick(recordIdToDelete);
+    }
+    setRecordIdToDelete("");
+    handleCloseDialog();
+  };
   return (
     <>
       <Nav />
       <Container maxWidth="xl">
+        <ConfirmBox
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          context={"delete this record"}
+        />
         <Box sx={{ bgcolor: "#b2ebf2", height: "70px" }}>
           <FormControl>
             <TextField

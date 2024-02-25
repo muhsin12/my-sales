@@ -32,6 +32,7 @@ import {
   searchPurchases,
 } from "../../services/expense-service";
 import { fetchCategories } from "../../services/expense-category-service";
+import ConfirmBox from "@/components/confirm-popup.component";
 
 interface Iexpense {
   _id: string;
@@ -68,6 +69,8 @@ export default function Expenses() {
   const [expenseTotal, setExpenseTotal] = useState(0);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -134,7 +137,7 @@ export default function Expenses() {
             variant="contained"
             color="error"
             onClick={(event) => {
-              handleDeleteClick(event, cellValues);
+              handleOpenDialog(event, cellValues);
             }}
           >
             Delete
@@ -155,18 +158,15 @@ export default function Expenses() {
   ];
 
   // handle delete click
-  const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
-    event.stopPropagation();
-    if (confirm("Are you Sure , Do you want to delete this purchase?")) {
-      deletePurchase(cellValues.row._id)
-        .then((response) => {
-          console.log(response);
-          getAllExpenses();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
+  const handleDeleteClick = (recordId: string) => {
+    deletePurchase(recordId)
+      .then((response) => {
+        console.log(response);
+        getAllExpenses();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   //find all expense
@@ -236,14 +236,43 @@ export default function Expenses() {
           setExpenseData(data?.purchases);
           setExpenseRawData(data?.purchases);
           findTotalExpenses(data?.purchases);
+        } else {
+          setExpenseData([]);
+          setExpenseRawData([]);
+          findTotalExpenses([]);
         }
       });
+  };
+
+  const handleOpenDialog = (event: any, cellValues: GridRenderCellParams) => {
+    event.stopPropagation();
+    setRecordIdToDelete(cellValues.row._id);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    if (recordIdToDelete !== null) {
+      // Call your delete record API with recordIdToDelete
+      handleDeleteClick(recordIdToDelete);
+    }
+    setRecordIdToDelete("");
+    handleCloseDialog();
   };
 
   return (
     <>
       <Nav />
       <Container maxWidth="xl">
+        <ConfirmBox
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          context={"delete this record"}
+        />
         <Box sx={{ bgcolor: "#b2ebf2", height: "70px" }}>
           <Button
             variant="outlined"

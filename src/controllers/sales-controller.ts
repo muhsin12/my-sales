@@ -29,50 +29,87 @@ async function getNextSequence() {
     throw error; // rethrow the error if needed
   }
 }
+
 export async function createSales(req: NextApiRequest, res: NextApiResponse) {
   try {
     const salesData = req.body;
     if (!salesData) {
-      res.status(404).json({ error: "sales data not provided" });
+      return res.status(404).json({ error: "sales data not provided" });
     }
 
+    // Get the next sequence for the salesId
     getNextSequence()
       .then((salesId) => {
-        console.log("result-", salesId);
         const salesInsertData = {
           salesTotal: req.body.totalPrice,
           salesDate: new Date(),
           salesId: salesId,
         };
         let salesDetails = req.body.details;
-        Sales.create(salesInsertData, (err: any, data: any) => {
-          console.log("my sales-mp--", data);
-          if (err)
-            res.status(404).json({ error: "error while inserting Sales data" });
-          let prodId = mongoose.Types.ObjectId;
-          let salesid = mongoose.Types.ObjectId;
-          salesDetails.forEach((el: any) => {
-            let salesDetailsData = {
-              salesId: new salesid(data._id),
-              itemId: new prodId(el.itemId),
-              itemName: el.itemName,
-              price: el.price,
-              quantity: el.quantity,
-              itemPrice: el.itemPrice,
-            };
-            console.log("sales details data----mp-", salesDetailsData);
-            SalesDetails.create(salesDetailsData, (err: any, data: any) => {
-              if (err) console.log("sales deail errrrror--", err);
-              console.log("after sales detail inserted-", data);
+
+        // Create the main sales record
+        Sales.create(salesInsertData, (err: any, mainSalesRecord: any) => {
+          if (err) {
+            return res
+              .status(404)
+              .json({ error: "error while inserting Sales data" });
+          }
+
+          // Log the main sales record
+          console.log("main sales record--1--", mainSalesRecord);
+
+          const mainSalesId = mainSalesRecord._id;
+
+          // Create sales details records
+          const promises = salesDetails.map((el: any) => {
+            return new Promise((resolve, reject) => {
+              let salesDetailsData = {
+                salesId: mainSalesId,
+                itemId: el.itemId,
+                itemName: el.itemName,
+                price: el.price,
+                quantity: el.quantity,
+                itemPrice: el.itemPrice,
+              };
+
+              // Create each sales details record
+              SalesDetails.create(salesDetailsData, (err: any, data: any) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                // Log each sales details record
+                console.log("sales details record---2---", data);
+                resolve(data);
+              });
             });
           });
+
+          // Wait for all promises to resolve
+          Promise.all(promises)
+            .then((results) => {
+              // Return success message
+              res
+                .status(200)
+                .json({ message: "Sales data inserted successfully" });
+            })
+            .catch((error) => {
+              // Handle error while inserting sales details
+              console.error(error);
+              res
+                .status(500)
+                .json({ error: "Error while inserting sales details" });
+            });
         });
       })
       .catch((error) => {
+        // Handle error while getting next sequence
         console.error(error);
+        res.status(500).json({ error: "Error while creating sales record" });
       });
   } catch (error) {
-    res.status(404).json({ error: "error while inserting Sales data" });
+    // Handle any other errors
+    res.status(500).json({ error: "Error while processing request" });
   }
 }
 
@@ -95,13 +132,11 @@ export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
     const { firstDate, lastDate } = req.query;
     let queryResult;
     if (firstDate && lastDate) {
-      console.log("aaaaa");
       // Retrieve purchases for a specific date
       const startDate = new Date(firstDate.toString());
       const endDate = new Date(lastDate.toString());
       queryResult = await getSalesInDateRange(startDate, endDate);
     } else {
-      console.log("bbbbb");
       // Retrieve all purchases if no date range is specified
       queryResult = await getAllSales();
     }
