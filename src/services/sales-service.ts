@@ -1,8 +1,9 @@
 const { END_POINT } = require("../config");
 const salesEndPoint = END_POINT.SALES;
 
-export const fetchSales = () => {
-  return fetch(salesEndPoint, { method: "GET" });
+export const fetchSales = (page: number, pageSize: number) => {
+  let salesApiEndpoint = `${salesEndPoint}?page=${page}&pageSize=${pageSize}`;
+  return fetch(salesApiEndpoint, { method: "GET" });
 };
 
 export const createSales = (dataBody: any, mode: boolean, salesId?: string) => {

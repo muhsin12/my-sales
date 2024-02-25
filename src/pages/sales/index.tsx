@@ -57,6 +57,14 @@ export default function Sales() {
   const [toDate, setToDate] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
+
+  const [pageState, setPageState] = useState({
+    isLoading: false,
+    data: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: 5,
+  });
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -69,7 +77,7 @@ export default function Sales() {
 
   useEffect(() => {
     getAllSales();
-  }, []);
+  }, [pageState.page, pageState.pageSize]);
 
   useEffect(() => {
     const sum = salesData.reduce((accumulator, object) => {
@@ -137,7 +145,8 @@ export default function Sales() {
   };
 
   const getAllSales = () => {
-    fetchSales()
+    setPageState((old) => ({ ...old, isLoading: true }));
+    fetchSales(pageState.page, pageState.pageSize)
       .then((res) => res.json())
       .then((data) => {
         if (data.sales) {
@@ -148,6 +157,12 @@ export default function Sales() {
           });
           setSalesData(data.sales);
         }
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: data.sales,
+          totalCount: data.salesCount,
+        }));
       });
   };
 
@@ -263,16 +278,26 @@ export default function Sales() {
             </Button>
           </FormControl>
         </Box>
-        <Box sx={{ bgcolor: "white", height: "70vh" }}>
+        <Box sx={{ bgcolor: "white", height: "80vh" }}>
           <DataGrid
             onRowClick={handleRowClick}
-            rows={salesData}
-            getRowId={(row: any) => generateRandom()}
-            columns={columns}
-            pageSize={20}
+            pagination
+            rows={pageState.data}
+            rowCount={pageState.totalCount}
+            loading={pageState.isLoading}
+            page={pageState.page - 1}
+            pageSize={pageState.pageSize}
+            onPageChange={(newPage) =>
+              setPageState((old) => ({ ...old, page: newPage + 1 }))
+            }
+            onPageSizeChange={(newPageSize) =>
+              setPageState((old) => ({ ...old, pageSize: newPageSize }))
+            }
             rowsPerPageOptions={[5, 10, 15, 20]}
+            paginationMode="server"
+            columns={columns}
+            getRowId={(row: any) => generateRandom()}
             disableSelectionOnClick
-            experimentalFeatures={{ newEditingApi: true }}
           />
         </Box>
         <Box sx={{ bgcolor: "white", height: "30vh" }}>

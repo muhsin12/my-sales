@@ -121,15 +121,20 @@ async function getSalesInDateRange(startDate: Date, endDate: Date) {
 }
 
 // Function to retrieve all purchases
-async function getAllSales() {
-  return await Sales.find();
+async function getAllSales(page: number, pageSize: number) {
+  const skipCount = (page - 1) * pageSize;
+  return await Sales.find().skip(skipCount).limit(pageSize);
+}
+// Function to retrieve all purchases
+async function getSalesCount() {
+  return await Sales.countDocuments({});
 }
 // read all sales
 export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
   console.log("reqest object url---", req.url);
   try {
     // Extract date range parameters from request query
-    const { firstDate, lastDate } = req.query;
+    const { firstDate, lastDate, page, pageSize } = req.query;
     let queryResult;
     if (firstDate && lastDate) {
       // Retrieve purchases for a specific date
@@ -138,14 +143,14 @@ export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
       queryResult = await getSalesInDateRange(startDate, endDate);
     } else {
       // Retrieve all purchases if no date range is specified
-      queryResult = await getAllSales();
+      queryResult = await getAllSales(Number(page), Number(pageSize));
     }
 
     if (!queryResult || queryResult.length === 0) {
       return res.status(404).json({ error: "Sales not found" });
     }
-
-    res.status(200).json({ sales: queryResult });
+    const salesCount = await getSalesCount();
+    res.status(200).json({ sales: queryResult, salesCount });
   } catch (error) {
     // Return an error response if an exception occurs
     res.status(404).json({ error: "error while fetching sales" });
