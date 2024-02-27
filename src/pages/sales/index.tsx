@@ -76,7 +76,11 @@ export default function Sales() {
   };
 
   useEffect(() => {
-    getAllSales();
+    if (fromDate == "" && toDate == "") {
+      getAllSales();
+    } else {
+      handleSearch();
+    }
   }, [pageState.page, pageState.pageSize]);
 
   useEffect(() => {
@@ -144,26 +148,31 @@ export default function Sales() {
       .substring(0, 5)}`;
   };
 
-  const getAllSales = () => {
-    setPageState((old) => ({ ...old, isLoading: true }));
-    fetchSales(pageState.page, pageState.pageSize)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.sales) {
-          data.sales.map((sale: any) => {
-            const updatedDateString = formatDate(sale.salesDate);
-            sale.salesDate = updatedDateString;
-            return sale;
-          });
-          setSalesData(data.sales);
-        }
+  const getAllSales = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+
+      const response = await fetchSales(pageState.page, pageState.pageSize);
+      const data = await response.json();
+
+      if (data.sales) {
+        const updatedSalesData = data.sales.map((sale: any) => {
+          const updatedDateString = formatDate(sale.salesDate);
+          return { ...sale, salesDate: updatedDateString };
+        });
+
+        setSalesData(updatedSalesData);
         setPageState((old) => ({
           ...old,
           isLoading: false,
-          data: data.sales,
+          data: updatedSalesData,
           totalCount: data.salesCount,
         }));
-      });
+      }
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+      // Handle error here if necessary
+    }
   };
 
   const handleRowClick: GridEventListener<"rowClick"> = (params, event) => {
@@ -180,25 +189,48 @@ export default function Sales() {
     setSaveSuccess(false);
   };
 
-  const handleSearch = () => {
-    const filterObj = {
-      fromDate,
-      toDate,
-    };
-    searchSales(filterObj)
-      .then((res) => res.json())
-      .then((data: any) => {
-        if (data?.sales) {
-          data.sales.map((sale: any) => {
-            const updateDate = formatDate(sale.salesDate);
-            sale.salesDate = updateDate;
-            return sale;
-          });
-          setSalesData(data.sales);
-        } else {
-          setSalesData([]);
-        }
-      });
+  const handleSearch = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+      const filterObj = {
+        fromDate,
+        toDate,
+        page: pageState.page,
+        pageSize: pageState.pageSize, // Fixed typo: 'pageSze' to 'pageSize'
+      };
+      const response = await searchSales(filterObj);
+      const data = await response.json();
+      if (data?.sales) {
+        const updatedSalesData = data.sales.map((sale: any) => {
+          const updatedDate = formatDate(sale.salesDate);
+          return { ...sale, salesDate: updatedDate };
+        });
+        setSalesData(updatedSalesData);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedSalesData,
+          totalCount: data.salesCount,
+        }));
+      } else {
+        setSalesData([]);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: [],
+          totalCount: 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Error searching sales:", error);
+      // Handle error here if necessary
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
 
   const popUpPropps = {

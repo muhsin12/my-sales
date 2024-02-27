@@ -114,8 +114,22 @@ export async function createSales(req: NextApiRequest, res: NextApiResponse) {
 }
 
 // Function to retrieve sales within a date range
-async function getSalesInDateRange(startDate: Date, endDate: Date) {
+async function getSalesInDateRange(
+  startDate: Date,
+  endDate: Date,
+  page: number,
+  pageSize: number
+) {
+  const skipCount = (page - 1) * pageSize;
   return await Sales.find({
+    salesDate: { $gte: startDate, $lte: endDate },
+  })
+    .skip(skipCount)
+    .limit(pageSize);
+}
+
+async function getSalesCountInRange(startDate: Date, endDate: Date) {
+  return await Sales.countDocuments({
     salesDate: { $gte: startDate, $lte: endDate },
   });
 }
@@ -135,13 +149,22 @@ export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
   try {
     // Extract date range parameters from request query
     const { firstDate, lastDate, page, pageSize } = req.query;
-    let queryResult;
+    let queryResult, salesCount;
     if (firstDate && lastDate) {
       // Retrieve purchases for a specific date
       const startDate = new Date(firstDate.toString());
       const endDate = new Date(lastDate.toString());
-      queryResult = await getSalesInDateRange(startDate, endDate);
+
+      salesCount = await getSalesCountInRange(startDate, endDate);
+
+      queryResult = await getSalesInDateRange(
+        startDate,
+        endDate,
+        Number(page),
+        Number(pageSize)
+      );
     } else {
+      salesCount = await getSalesCount();
       // Retrieve all purchases if no date range is specified
       queryResult = await getAllSales(Number(page), Number(pageSize));
     }
@@ -149,7 +172,7 @@ export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
     if (!queryResult || queryResult.length === 0) {
       return res.status(404).json({ error: "Sales not found" });
     }
-    const salesCount = await getSalesCount();
+
     res.status(200).json({ sales: queryResult, salesCount });
   } catch (error) {
     // Return an error response if an exception occurs
