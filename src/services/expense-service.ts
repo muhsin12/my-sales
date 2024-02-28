@@ -1,24 +1,47 @@
 const { END_POINT } = require("../config");
 const purcaseEndPoint = END_POINT.EXPENSE;
 
-export const fetchPurchases = () => {
-  return fetch(purcaseEndPoint, { method: "GET" });
+export const fetchPurchases = async (page: number, pageSize: number) => {
+  try {
+    let purchaseApiEndpoint = `${purcaseEndPoint}?page=${page}&pageSize=${pageSize}`;
+    const response = await fetch(purchaseApiEndpoint, { method: "GET" });
+
+    if (!response.ok) {
+      throw new Error(`Error fetching purchases: ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error: any) {
+    throw new Error(`Error fetching purchases: ${error.message}`);
+  }
 };
 
-export const searchPurchases = (params: any) => {
-  let searchUrl = purcaseEndPoint;
+export const searchPurchases = async (params: any) => {
+  let searchUrl = `${purcaseEndPoint}?page=${params.page}&pageSize=${params.pageSize}`;
+
   if (params.fromDate && params.toDate && params.categoryId) {
-    searchUrl = `${purcaseEndPoint}?firstDate=${params.fromDate}&lastDate=${params.toDate}&categoryId=${params.categoryId}`;
+    searchUrl = `${searchUrl}&firstDate=${params.fromDate}&lastDate=${params.toDate}&categoryId=${params.categoryId}`;
   } else if (params.fromDate && params.toDate && params.categoryId == "") {
-    searchUrl = `${purcaseEndPoint}?firstDate=${params.fromDate}&lastDate=${params.toDate}`;
+    searchUrl = `${searchUrl}&firstDate=${params.fromDate}&lastDate=${params.toDate}`;
   } else if (
     params.categoryId &&
     params.fromDate == "" &&
     params.toDate == ""
   ) {
-    searchUrl = `${purcaseEndPoint}?categoryId=${params.categoryId}`;
+    searchUrl = `${searchUrl}&categoryId=${params.categoryId}`;
   }
-  return fetch(searchUrl, { method: "GET" });
+
+  try {
+    const response = await fetch(searchUrl, { method: "GET" });
+
+    if (!response.ok) {
+      throw new Error(`Error searching purchases: ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error: any) {
+    throw new Error(`Error searching purchases: ${error.message}`);
+  }
 };
 
 export const createPurchase = (

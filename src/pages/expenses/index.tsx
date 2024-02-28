@@ -33,6 +33,7 @@ import {
 } from "../../services/expense-service";
 import { fetchCategories } from "../../services/expense-category-service";
 import ConfirmBox from "@/components/confirm-popup.component";
+import Purchases from "@/models/purchase-model";
 
 interface Iexpense {
   _id: string;
@@ -71,6 +72,13 @@ export default function Expenses() {
   const [toDate, setToDate] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
+  const [pageState, setPageState] = useState({
+    isLoading: false,
+    data: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: 5,
+  });
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -91,8 +99,15 @@ export default function Expenses() {
   };
   useEffect(() => {
     getAllCategories();
-    getAllExpenses();
   }, []);
+
+  useEffect(() => {
+    if (fromDate == "" && toDate == "" && categoryId == "") {
+      getAllExpenses();
+    } else {
+      handleSearch();
+    }
+  }, [pageState.page, pageState.pageSize]);
 
   //find total
   const findTotalExpenses = (expenses: any) => {
@@ -101,6 +116,13 @@ export default function Expenses() {
     }, 0);
     setExpenseTotal(sum);
   };
+
+  useEffect(() => {
+    const sum = expenseData.reduce((accumulator: any, object: any) => {
+      return accumulator + object.price;
+    }, 0);
+    setExpenseTotal(sum);
+  }, [expenseData]);
 
   //definition of purchase grid
   const columns: GridColDef[] = [
@@ -170,21 +192,39 @@ export default function Expenses() {
   };
 
   //find all expense
-  const getAllExpenses = () => {
-    fetchPurchases()
-      .then((res) => res.json())
-      .then((data: any) => {
-        if (data?.purchases) {
-          data?.purchases?.map((expense: any) => {
-            const updateDate = expense?.purchaseDate?.split("T")[0];
-            expense.purchaseDate = updateDate;
-            return expense;
-          });
-          setExpenseData(data?.purchases);
-          setExpenseRawData(data?.purchases);
-          findTotalExpenses(data?.purchases);
-        }
-      });
+
+  const getAllExpenses = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+
+      const response = await fetchPurchases(pageState.page, pageState.pageSize);
+      const data = await response.json();
+
+      if (data?.purchases) {
+        const updatedPurchases = data?.purchases?.map((expense: any) => {
+          const updateDate = expense?.purchaseDate?.split("T")[0];
+          return { ...expense, purchaseDate: updateDate };
+        });
+        setExpenseData(updatedPurchases);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedPurchases,
+          totalCount: data.totalPurchases,
+        }));
+      }
+
+      setPageState((old) => ({ ...old, isLoading: false }));
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+      // Handle error here if necessary
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
 
   //handle row click for popup opening
@@ -218,30 +258,48 @@ export default function Expenses() {
     saveSuccess: saveSuccess,
   };
 
-  const handleSearch = () => {
-    const filterObj = {
-      fromDate,
-      toDate,
-      categoryId,
-    };
-    searchPurchases(filterObj)
-      .then((res) => res.json())
-      .then((data: any) => {
-        if (data?.purchases) {
-          data?.purchases?.map((expense: any) => {
-            const updateDate = expense?.purchaseDate?.split("T")[0];
-            expense.purchaseDate = updateDate;
-            return expense;
-          });
-          setExpenseData(data?.purchases);
-          setExpenseRawData(data?.purchases);
-          findTotalExpenses(data?.purchases);
-        } else {
-          setExpenseData([]);
-          setExpenseRawData([]);
-          findTotalExpenses([]);
-        }
-      });
+  const handleSearch = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+      const filterObj = {
+        fromDate,
+        toDate,
+        categoryId,
+        page: pageState.page,
+        pageSize: pageState.pageSize,
+      };
+
+      const response = await searchPurchases(filterObj);
+      const data = await response.json();
+
+      if (data?.purchases) {
+        const updatedPurchases = data?.purchases?.map((expense: any) => {
+          const updateDate = expense?.purchaseDate?.split("T")[0];
+          return { ...expense, purchaseDate: updateDate };
+        });
+
+        setExpenseData(updatedPurchases);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedPurchases,
+          totalCount: data.totalPurchases,
+        }));
+      } else {
+        setExpenseData([]);
+        setExpenseRawData([]);
+        findTotalExpenses([]);
+      }
+    } catch (error) {
+      console.error("Error searching purchases:", error);
+      // Handle error here if necessary
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
 
   const handleOpenDialog = (event: any, cellValues: GridRenderCellParams) => {
@@ -290,7 +348,7 @@ export default function Expenses() {
               label="Select Category"
               onChange={(e) => setCategoryId(e.target.value)}
             >
-              <MenuItem value="reset">Select Category</MenuItem>
+              <MenuItem value="">Select Category</MenuItem>
               {categoryData.map((category: any) => (
                 <MenuItem key={category._id} value={category._id}>
                   {category.categoryName}
@@ -341,11 +399,22 @@ export default function Expenses() {
         <Box sx={{ bgcolor: "white", height: "70vh" }}>
           <DataGrid
             onRowClick={handleRowClick}
-            rows={expenseData}
             getRowId={(row: any) => generateRandom()}
             columns={columns}
-            pageSize={20}
+            pagination
+            rows={pageState.data}
+            rowCount={pageState.totalCount}
+            loading={pageState.isLoading}
+            page={pageState.page - 1}
+            pageSize={pageState.pageSize}
+            onPageChange={(newPage) =>
+              setPageState((old) => ({ ...old, page: newPage + 1 }))
+            }
+            onPageSizeChange={(newPageSize) =>
+              setPageState((old) => ({ ...old, pageSize: newPageSize }))
+            }
             rowsPerPageOptions={[5, 10, 15, 20]}
+            paginationMode="server"
             disableSelectionOnClick
             experimentalFeatures={{ newEditingApi: true }}
           />
