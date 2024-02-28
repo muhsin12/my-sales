@@ -38,7 +38,7 @@ export const searchSales = async (params: any) => {
   let searchUrl = `${salesEndPoint}?page=${params.page}&pageSize=${params.pageSize}`;
 
   if (params.fromDate && params.toDate) {
-    searchUrl = `${salesEndPoint}?firstDate=${params.fromDate}&lastDate=${params.toDate}`;
+    searchUrl = `${searchUrl}&firstDate=${params.fromDate}&lastDate=${params.toDate}`;
   }
 
   try {

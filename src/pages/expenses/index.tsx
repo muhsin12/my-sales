@@ -33,7 +33,7 @@ import {
 } from "../../services/expense-service";
 import { fetchCategories } from "../../services/expense-category-service";
 import ConfirmBox from "@/components/confirm-popup.component";
-import Purchases from "@/models/purchase-model";
+import DataGridWithTotal from "@/components/data-grid.component";
 
 interface Iexpense {
   _id: string;
@@ -109,14 +109,6 @@ export default function Expenses() {
     }
   }, [pageState.page, pageState.pageSize]);
 
-  //find total
-  const findTotalExpenses = (expenses: any) => {
-    const sum = expenses?.reduce((accumulator: any, object: any) => {
-      return accumulator + object.price;
-    }, 0);
-    setExpenseTotal(sum);
-  };
-
   useEffect(() => {
     const sum = expenseData.reduce((accumulator: any, object: any) => {
       return accumulator + object.price;
@@ -183,8 +175,11 @@ export default function Expenses() {
   const handleDeleteClick = (recordId: string) => {
     deletePurchase(recordId)
       .then((response) => {
-        console.log(response);
-        getAllExpenses();
+        if (fromDate == "" && toDate == "" && categoryId == "") {
+          getAllExpenses();
+        } else {
+          handleSearch();
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -241,7 +236,11 @@ export default function Expenses() {
   // submitting the purchase form
   const purchaseFormSubmit = (formData: any) => {
     createPurchase(formData, editMode, expenseId).then((res) => {
-      getAllExpenses();
+      if (fromDate == "" && toDate == "" && categoryId == "") {
+        getAllExpenses();
+      } else {
+        handleSearch();
+      }
       handleClose();
       setEditMode(false);
       setRecordForEdit(null);
@@ -288,7 +287,6 @@ export default function Expenses() {
       } else {
         setExpenseData([]);
         setExpenseRawData([]);
-        findTotalExpenses([]);
       }
     } catch (error) {
       console.error("Error searching purchases:", error);
@@ -396,45 +394,14 @@ export default function Expenses() {
             </Button>
           </FormControl>
         </Box>
-        <Box sx={{ bgcolor: "white", height: "70vh" }}>
-          <DataGrid
-            onRowClick={handleRowClick}
-            getRowId={(row: any) => generateRandom()}
-            columns={columns}
-            pagination
-            rows={pageState.data}
-            rowCount={pageState.totalCount}
-            loading={pageState.isLoading}
-            page={pageState.page - 1}
-            pageSize={pageState.pageSize}
-            onPageChange={(newPage) =>
-              setPageState((old) => ({ ...old, page: newPage + 1 }))
-            }
-            onPageSizeChange={(newPageSize) =>
-              setPageState((old) => ({ ...old, pageSize: newPageSize }))
-            }
-            rowsPerPageOptions={[5, 10, 15, 20]}
-            paginationMode="server"
-            disableSelectionOnClick
-            experimentalFeatures={{ newEditingApi: true }}
-          />
-          <Box sx={{ bgcolor: "white", height: "30vh" }}>
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="tdWidth">Total</TableCell>
-                  <TableCell className="tdWidth">{expenseTotal}</TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
+        <DataGridWithTotal
+          pageState={pageState}
+          handleRowClick={handleRowClick}
+          totalAmount={expenseTotal}
+          columns={columns}
+          generateRandom={generateRandom}
+          setPageState={setPageState}
+        />
         <PurchasePopup {...popUpPropps} />
       </Container>
     </>

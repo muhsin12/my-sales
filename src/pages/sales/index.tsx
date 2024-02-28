@@ -1,17 +1,7 @@
 import * as React from "react";
 import Container from "@mui/material/Container";
+import { Box, Button, FormControl, TextField } from "@mui/material";
 import {
-  Box,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  FormControl,
-  TextField,
-} from "@mui/material";
-import {
-  DataGrid,
   GridColDef,
   GridEventListener,
   GridRenderCellParams,
@@ -22,6 +12,7 @@ import { useState, useEffect } from "react";
 import Nav from "../nav";
 import SalesPopup from "@/components/sales-popup.component";
 import ConfirmBox from "@/components/confirm-popup.component";
+import DataGridWithTotal from "@/components/data-grid.component";
 import {
   fetchSales,
   deleteSales,
@@ -310,44 +301,14 @@ export default function Sales() {
             </Button>
           </FormControl>
         </Box>
-        <Box sx={{ bgcolor: "white", height: "80vh" }}>
-          <DataGrid
-            onRowClick={handleRowClick}
-            pagination
-            rows={pageState.data}
-            rowCount={pageState.totalCount}
-            loading={pageState.isLoading}
-            page={pageState.page - 1}
-            pageSize={pageState.pageSize}
-            onPageChange={(newPage) =>
-              setPageState((old) => ({ ...old, page: newPage + 1 }))
-            }
-            onPageSizeChange={(newPageSize) =>
-              setPageState((old) => ({ ...old, pageSize: newPageSize }))
-            }
-            rowsPerPageOptions={[5, 10, 15, 20]}
-            paginationMode="server"
-            columns={columns}
-            getRowId={(row: any) => generateRandom()}
-            disableSelectionOnClick
-          />
-        </Box>
-        <Box sx={{ bgcolor: "white", height: "30vh" }}>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell className="tdWidth">Total</TableCell>
-                <TableCell className="tdWidth">{totalSales}</TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </Box>
+        <DataGridWithTotal
+          pageState={pageState}
+          handleRowClick={handleRowClick}
+          totalAmount={totalSales}
+          columns={columns}
+          generateRandom={generateRandom}
+          setPageState={setPageState}
+        />
         <SalesPopup {...popUpPropps} />
       </Container>
     </>
