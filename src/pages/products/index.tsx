@@ -23,6 +23,7 @@ import ProductPopup from "@/components/product-popup.component";
 import { createItem, deleteItem, fetchItem } from "../../services/item-service";
 import { fetchCategories } from "../../services/category-service";
 import ConfirmBox from "@/components/confirm-popup.component";
+import DataGridComponent from "@/components/data-grid.component";
 
 interface Iproduct {
   _id: string;
@@ -55,9 +56,16 @@ export default function Products() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [productId, setProductId] = useState("");
   const [categoryData, setCategoryData] = useState<Icategory[]>([]);
-  const [categoryId, setCategoryId] = useState("reset");
+  const [categoryId, setCategoryId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
+  const [pageState, setPageState] = useState({
+    isLoading: false,
+    data: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: 5,
+  });
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -70,9 +78,12 @@ export default function Products() {
   };
 
   useEffect(() => {
-    getAllProducts();
     getAllCategories();
   }, []);
+
+  useEffect(() => {
+    getAllProducts();
+  }, [pageState.page, pageState.pageSize, categoryId]);
 
   const columns: GridColDef[] = [
     {
@@ -129,14 +140,49 @@ export default function Products() {
       });
   };
 
-  const getAllProducts = () => {
-    fetchItem()
-      .then((res) => res.json())
-      .then((data) => {
-        setProductData(data.products);
-        setProductRawData(data.products);
-      });
+  const getAllProducts = async () => {
+    setPageState((old) => ({ ...old, isLoading: true }));
+
+    const params: any = {
+      page: pageState.page,
+      pageSize: pageState.pageSize,
+    };
+    if (categoryId != "") {
+      params.categoryId = categoryId;
+    }
+    try {
+      const res = await fetchItem(params);
+      const data = await res.json();
+
+      setProductData(data.products);
+      setProductRawData(data.products);
+      if (data.totalProducts > 0) {
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: data.products,
+          totalCount: data.totalProducts,
+        }));
+      } else {
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: [],
+          totalCount: 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      // Handle error if needed
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
+
   const getAllCategories = () => {
     fetchCategories()
       .then((res) => res.json())
@@ -176,15 +222,10 @@ export default function Products() {
   const filterProducts = (event: SelectChangeEvent) => {
     console.log("change event-", event.target);
     let categoryId = event.target.value;
-    if (categoryId != "reset") {
+    if (categoryId != "") {
       setCategoryId(categoryId);
-      const filteredProductData = productRawData.filter(
-        (el) => el.categoryId == categoryId
-      );
-      setProductData(filteredProductData);
     } else {
-      setCategoryId("select category");
-      setProductData(productRawData);
+      setCategoryId("");
     }
   };
 
@@ -217,7 +258,7 @@ export default function Products() {
           onConfirm={handleConfirmAction}
           context={"delete this record"}
         />
-        <Box sx={{ bgcolor: "#b2ebf2", height: "50px" }}>
+        <Box sx={{ bgcolor: "#b2ebf2", height: "60px" }}>
           <Button
             variant="outlined"
             style={{ background: "#00838f", color: "white", marginTop: "5px" }}
@@ -234,7 +275,7 @@ export default function Products() {
               label="Select Category"
               onChange={filterProducts}
             >
-              <MenuItem value="reset">Select Category</MenuItem>
+              <MenuItem value="">Select Category</MenuItem>
               {categoryData.map((category: any) => (
                 <MenuItem key={category._id} value={category._id}>
                   {category.categoryName}
@@ -244,15 +285,13 @@ export default function Products() {
           </FormControl>
         </Box>
         <Box sx={{ bgcolor: "white", height: "70vh" }}>
-          <DataGrid
-            onRowClick={handleRowClick}
-            rows={productData}
-            getRowId={(row: any) => generateRandom()}
+          <DataGridComponent
+            pageState={pageState}
+            handleRowClick={handleRowClick}
+            totalAmount={0}
             columns={columns}
-            pageSize={20}
-            rowsPerPageOptions={[5, 10, 15, 20]}
-            disableSelectionOnClick
-            experimentalFeatures={{ newEditingApi: true }}
+            generateRandom={generateRandom}
+            setPageState={setPageState}
           />
         </Box>
         <ProductPopup {...popUpPropps} />

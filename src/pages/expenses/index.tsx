@@ -33,7 +33,7 @@ import {
 } from "../../services/expense-service";
 import { fetchCategories } from "../../services/expense-category-service";
 import ConfirmBox from "@/components/confirm-popup.component";
-import DataGridWithTotal from "@/components/data-grid.component";
+import DataGridComponent from "@/components/data-grid.component";
 
 interface Iexpense {
   _id: string;
@@ -394,7 +394,7 @@ export default function Expenses() {
             </Button>
           </FormControl>
         </Box>
-        <DataGridWithTotal
+        <DataGridComponent
           pageState={pageState}
           handleRowClick={handleRowClick}
           totalAmount={expenseTotal}

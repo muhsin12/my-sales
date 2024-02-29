@@ -19,7 +19,7 @@ interface Props {
   >;
 }
 
-const DataGridWithTotal: React.FC<Props> = ({
+const DataGridComponent: React.FC<Props> = ({
   pageState,
   handleRowClick,
   totalAmount,
@@ -54,26 +54,28 @@ const DataGridWithTotal: React.FC<Props> = ({
           disableSelectionOnClick
         />
       </Box>
-      <Box sx={{ bgcolor: "white", height: "30vh" }}>
-        <Table>
-          <TableBody>
-            <TableRow>
-              <TableCell className="tdWidth">Total</TableCell>
-              <TableCell className="tdWidth">{totalAmount}</TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-              <TableCell className="tdWidth"></TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Box>
+      {totalAmount !== 0 && (
+        <Box sx={{ bgcolor: "white", height: "30vh" }}>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="tdWidth">Total</TableCell>
+                <TableCell className="tdWidth">{totalAmount}</TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+                <TableCell className="tdWidth"></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Box>
+      )}
     </>
   );
 };
 
-export default DataGridWithTotal;
+export default DataGridComponent;

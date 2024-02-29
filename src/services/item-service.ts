@@ -1,8 +1,12 @@
 const { END_POINT } = require("../config");
 const productEndPoint = END_POINT.PRODUCT;
 
-export const fetchItem = () => {
-  return fetch(productEndPoint, { method: "GET" });
+export const fetchItem = (params: any) => {
+  let searchUrl = `${productEndPoint}?page=${params.page}&pageSize=${params.pageSize}`;
+  if (params.categoryId) {
+    searchUrl = `${searchUrl}&categoryId=${params.categoryId}`;
+  }
+  return fetch(searchUrl, { method: "GET" });
 };
 
 export const createItem = (

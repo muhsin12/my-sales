@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import Nav from "../nav";
 import SalesPopup from "@/components/sales-popup.component";
 import ConfirmBox from "@/components/confirm-popup.component";
-import DataGridWithTotal from "@/components/data-grid.component";
+import DataGridComponent from "@/components/data-grid.component";
 import {
   fetchSales,
   deleteSales,
@@ -301,7 +301,7 @@ export default function Sales() {
             </Button>
           </FormControl>
         </Box>
-        <DataGridWithTotal
+        <DataGridComponent
           pageState={pageState}
           handleRowClick={handleRowClick}
           totalAmount={totalSales}
