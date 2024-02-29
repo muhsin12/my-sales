@@ -29,77 +29,154 @@ async function getNextSequence() {
     throw error; // rethrow the error if needed
   }
 }
+
 export async function createSales(req: NextApiRequest, res: NextApiResponse) {
   try {
     const salesData = req.body;
     if (!salesData) {
-      res.status(404).json({ error: "sales data not provided" });
+      return res.status(404).json({ error: "sales data not provided" });
     }
 
+    // Get the next sequence for the salesId
     getNextSequence()
       .then((salesId) => {
-        console.log("result-", salesId);
         const salesInsertData = {
           salesTotal: req.body.totalPrice,
           salesDate: new Date(),
           salesId: salesId,
         };
         let salesDetails = req.body.details;
-        Sales.create(salesInsertData, (err: any, data: any) => {
-          console.log("my sales-mp--", data);
-          if (err)
-            res.status(404).json({ error: "error while inserting Sales data" });
-          let prodId = mongoose.Types.ObjectId;
-          let salesid = mongoose.Types.ObjectId;
-          salesDetails.forEach((el: any) => {
-            let salesDetailsData = {
-              salesId: new salesid(data._id),
-              itemId: new prodId(el.itemId),
-              itemName: el.itemName,
-              price: el.price,
-              quantity: el.quantity,
-              itemPrice: el.itemPrice,
-            };
-            console.log("sales details data----mp-", salesDetailsData);
-            SalesDetails.create(salesDetailsData, (err: any, data: any) => {
-              if (err) console.log("sales deail errrrror--", err);
-              console.log("after sales detail inserted-", data);
+
+        // Create the main sales record
+        Sales.create(salesInsertData, (err: any, mainSalesRecord: any) => {
+          if (err) {
+            return res
+              .status(404)
+              .json({ error: "error while inserting Sales data" });
+          }
+
+          // Log the main sales record
+          console.log("main sales record--1--", mainSalesRecord);
+
+          const mainSalesId = mainSalesRecord._id;
+
+          // Create sales details records
+          const promises = salesDetails.map((el: any) => {
+            return new Promise((resolve, reject) => {
+              let salesDetailsData = {
+                salesId: mainSalesId,
+                itemId: el.itemId,
+                itemName: el.itemName,
+                price: el.price,
+                quantity: el.quantity,
+                itemPrice: el.itemPrice,
+              };
+
+              // Create each sales details record
+              SalesDetails.create(salesDetailsData, (err: any, data: any) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                // Log each sales details record
+                console.log("sales details record---2---", data);
+                resolve(data);
+              });
             });
           });
+
+          // Wait for all promises to resolve
+          Promise.all(promises)
+            .then((results) => {
+              // Return success message
+              res
+                .status(200)
+                .json({ message: "Sales data inserted successfully" });
+            })
+            .catch((error) => {
+              // Handle error while inserting sales details
+              console.error(error);
+              res
+                .status(500)
+                .json({ error: "Error while inserting sales details" });
+            });
         });
       })
       .catch((error) => {
+        // Handle error while getting next sequence
         console.error(error);
+        res.status(500).json({ error: "Error while creating sales record" });
       });
   } catch (error) {
-    res.status(404).json({ error: "error while inserting Sales data" });
+    // Handle any other errors
+    res.status(500).json({ error: "Error while processing request" });
   }
 }
 
+// Function to retrieve sales within a date range
+async function getSalesInDateRange(
+  startDate: Date,
+  endDate: Date,
+  page: number,
+  pageSize: number
+) {
+  const skipCount = (page - 1) * pageSize;
+  return await Sales.find({
+    salesDate: { $gte: startDate, $lte: endDate },
+  })
+    .skip(skipCount)
+    .limit(pageSize);
+}
+
+async function getSalesCountInRange(startDate: Date, endDate: Date) {
+  return await Sales.countDocuments({
+    salesDate: { $gte: startDate, $lte: endDate },
+  });
+}
+
+// Function to retrieve all purchases
+async function getAllSales(page: number, pageSize: number) {
+  const skipCount = (page - 1) * pageSize;
+  return await Sales.find().skip(skipCount).limit(pageSize);
+}
+// Function to retrieve all purchases
+async function getSalesCount() {
+  return await Sales.countDocuments({});
+}
+// read all sales
 export async function readAllSales(req: NextApiRequest, res: NextApiResponse) {
+  console.log("reqest object url---", req.url);
   try {
-    // const agg = [
-    //   {
-    //     $lookup: {
-    //       from: "categories",
-    //       localField: "categoryId",
-    //       foreignField: "_id",
-    //       as: "productCategory",
-    //     },
-    //   },
-    // ];
+    // Extract date range parameters from request query
+    const { firstDate, lastDate, page, pageSize } = req.query;
+    let queryResult, salesCount;
+    if (firstDate && lastDate) {
+      // Retrieve purchases for a specific date
+      const startDate = new Date(firstDate.toString());
+      const endDate = new Date(lastDate.toString());
 
-    // const products = await Sales.aggregate(agg);
+      salesCount = await getSalesCountInRange(startDate, endDate);
 
-    const sales = await Sales.find();
+      queryResult = await getSalesInDateRange(
+        startDate,
+        endDate,
+        Number(page),
+        Number(pageSize)
+      );
+    } else {
+      salesCount = await getSalesCount();
+      // Retrieve all purchases if no date range is specified
+      queryResult = await getAllSales(Number(page), Number(pageSize));
+    }
 
-    if (!sales) {
+    if (!queryResult || queryResult.length === 0) {
       return res.status(404).json({ error: "Sales not found" });
     }
-    res.status(200);
-    return res.json({ sales });
+
+    res.status(200).json({ sales: queryResult, salesCount });
   } catch (error) {
-    res.status(404).json({ error: "error while fetching Sales" });
+    // Return an error response if an exception occurs
+    res.status(404).json({ error: "error while fetching sales" });
   }
 }
 

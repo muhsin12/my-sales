@@ -1,25 +1,23 @@
 import * as React from "react";
 import Container from "@mui/material/Container";
+import { Box, Button, FormControl, TextField } from "@mui/material";
 import {
-  Box,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@mui/material";
-import {
-  DataGrid,
   GridColDef,
   GridEventListener,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 import Nav from "../nav";
 import SalesPopup from "@/components/sales-popup.component";
-import { fetchSales, deleteSales } from "../../services/sales-service";
+import ConfirmBox from "@/components/confirm-popup.component";
+import DataGridComponent from "@/components/data-grid.component";
+import {
+  fetchSales,
+  deleteSales,
+  searchSales,
+} from "../../services/sales-service";
 import { fetchSalesDetails } from "../../services/sales-details-service";
 
 interface ISales {
@@ -46,6 +44,18 @@ export default function Sales() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [salesId, setSalesId] = useState("");
   const [totalSales, setTotalSales] = useState(0);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
+
+  const [pageState, setPageState] = useState({
+    isLoading: false,
+    data: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: 5,
+  });
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -57,8 +67,12 @@ export default function Sales() {
   };
 
   useEffect(() => {
-    getAllSales();
-  }, []);
+    if (fromDate == "" && toDate == "") {
+      getAllSales();
+    } else {
+      handleSearch();
+    }
+  }, [pageState.page, pageState.pageSize]);
 
   useEffect(() => {
     const sum = salesData.reduce((accumulator, object) => {
@@ -96,7 +110,7 @@ export default function Sales() {
             variant="contained"
             color="error"
             onClick={(event) => {
-              handleDeleteClick(event, cellValues);
+              handleOpenDialog(event, cellValues);
             }}
           >
             Delete
@@ -106,37 +120,50 @@ export default function Sales() {
     },
   ];
 
-  const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
-    event.stopPropagation();
-    if (confirm("Are you Sure , Do you want to delete this Sales?")) {
-      deleteSales(cellValues.row._id)
-        .then((response) => {
-          console.log(response);
-          getAllSales();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
+  const handleDeleteClick = (recordId: string) => {
+    deleteSales(recordId)
+      .then((response) => {
+        console.log(response);
+        getAllSales();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
-  const getAllSales = () => {
-    fetchSales()
-      .then((res) => res.json())
-      .then((data) => {
-        const modifiedSalesData = data.sales.map((sale: any) => {
-          // Assuming sale.salesDate is the property containing the sales date
-          // Parse the current salesDate to a Date object
-          const salesDate = new Date(sale.salesDate);
-          const updatedDateString = `${
-            sale.salesDate.split("T")[0]
-          }  ${sale.salesDate.split("T")[1].split(".")[0].substring(0, 5)}`;
-          sale.salesDate = updatedDateString; // Convert back to ISO string format
-          return sale;
+  //formatting date
+  const formatDate = (date: string) => {
+    return `${date.split("T")[0]}  ${date
+      .split("T")[1]
+      .split(".")[0]
+      .substring(0, 5)}`;
+  };
+
+  const getAllSales = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+
+      const response = await fetchSales(pageState.page, pageState.pageSize);
+      const data = await response.json();
+
+      if (data.sales) {
+        const updatedSalesData = data.sales.map((sale: any) => {
+          const updatedDateString = formatDate(sale.salesDate);
+          return { ...sale, salesDate: updatedDateString };
         });
 
-        setSalesData(data.sales);
-      });
+        setSalesData(updatedSalesData);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedSalesData,
+          totalCount: data.salesCount,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+      // Handle error here if necessary
+    }
   };
 
   const handleRowClick: GridEventListener<"rowClick"> = (params, event) => {
@@ -147,11 +174,54 @@ export default function Sales() {
     fetchSalesDetails(params.row._id)
       .then((res) => res.json())
       .then((data) => {
-        console.log("salesDetails data in ff--", data);
         setRecordForEdit(data);
       });
     console.log(params.row);
     setSaveSuccess(false);
+  };
+
+  const handleSearch = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+      const filterObj = {
+        fromDate,
+        toDate,
+        page: pageState.page,
+        pageSize: pageState.pageSize, // Fixed typo: 'pageSze' to 'pageSize'
+      };
+      const response = await searchSales(filterObj);
+      const data = await response.json();
+      if (data?.sales) {
+        const updatedSalesData = data.sales.map((sale: any) => {
+          const updatedDate = formatDate(sale.salesDate);
+          return { ...sale, salesDate: updatedDate };
+        });
+        setSalesData(updatedSalesData);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedSalesData,
+          totalCount: data.salesCount,
+        }));
+      } else {
+        setSalesData([]);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: [],
+          totalCount: 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Error searching sales:", error);
+      // Handle error here if necessary
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
 
   const popUpPropps = {
@@ -161,39 +231,84 @@ export default function Sales() {
     recordForEdit: recordForEdit,
     saveSuccess: saveSuccess,
   };
+
+  const handleOpenDialog = (event: any, cellValues: GridRenderCellParams) => {
+    event.stopPropagation();
+    setRecordIdToDelete(cellValues.row._id);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    if (recordIdToDelete !== null) {
+      // Call your delete record API with recordIdToDelete
+      handleDeleteClick(recordIdToDelete);
+    }
+    setRecordIdToDelete("");
+    handleCloseDialog();
+  };
   return (
     <>
       <Nav />
       <Container maxWidth="xl">
-        <Box sx={{ bgcolor: "#b2ebf2", height: "50px" }}></Box>
-        <Box sx={{ bgcolor: "white", height: "70vh" }}>
-          <DataGrid
-            onRowClick={handleRowClick}
-            rows={salesData}
-            getRowId={(row: any) => generateRandom()}
-            columns={columns}
-            pageSize={20}
-            rowsPerPageOptions={[5, 10, 15, 20]}
-            disableSelectionOnClick
-            experimentalFeatures={{ newEditingApi: true }}
-          />
+        <ConfirmBox
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          context={"delete this record"}
+        />
+        <Box sx={{ bgcolor: "#b2ebf2", height: "70px" }}>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="fromDate"
+              name="fromDate"
+              label="From Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="toDate"
+              name="toDate"
+              label="To Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <Button
+              variant="outlined"
+              style={{
+                background: "#00838f",
+                color: "white",
+                marginTop: "15px",
+              }}
+              onClick={handleSearch}
+            >
+              Search
+            </Button>
+          </FormControl>
         </Box>
-        <Box sx={{ bgcolor: "white", height: "30vh" }}>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell className="tdWidth">Total</TableCell>
-                <TableCell className="tdWidth">{totalSales}</TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-                <TableCell className="tdWidth"></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </Box>
+        <DataGridComponent
+          pageState={pageState}
+          handleRowClick={handleRowClick}
+          totalAmount={totalSales}
+          columns={columns}
+          generateRandom={generateRandom}
+          setPageState={setPageState}
+        />
         <SalesPopup {...popUpPropps} />
       </Container>
     </>

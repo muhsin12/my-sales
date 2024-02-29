@@ -25,18 +25,57 @@ export async function createProduct(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
+async function getProductsBasedOnCategory(
+  categoryId: any,
+  page: number,
+  pageSize: number
+) {
+  const skipCount = (page - 1) * pageSize;
+  const productRecords = await Products.find({
+    categoryId: { $eq: categoryId },
+  })
+    .skip(skipCount)
+    .limit(pageSize);
+  const productCount = await Products.countDocuments({
+    categoryId: { $eq: categoryId },
+  });
+  const result = { productCount, productRecords };
+  return result;
+}
+
+// Function to retrieve all purchases
+async function getAllProducts(page: number, pageSize: number) {
+  const skipCount = (page - 1) * pageSize;
+  const productRecords = await Products.find().skip(skipCount).limit(pageSize);
+  const productCount = await Products.countDocuments({});
+  const result = { productCount, productRecords };
+  return result;
+}
+
 export async function readAllProducts(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
-    const products = await Products.find();
-
-    if (!products) {
-      return res.status(404).json({ error: "products not found" });
+    let queryResult: any;
+    const { categoryId, page, pageSize } = req.query;
+    if (categoryId) {
+      queryResult = await getProductsBasedOnCategory(
+        categoryId,
+        Number(page),
+        Number(pageSize)
+      );
+    } else {
+      queryResult = await getAllProducts(Number(page), Number(pageSize));
     }
-    res.status(200);
-    return res.json({ products });
+
+    if (!queryResult || queryResult.productCount === 0) {
+      return res.status(404).json({ error: "purchases not found" });
+    }
+    res.status(200).json({
+      products: queryResult.productRecords,
+      totalProducts: queryResult.productCount,
+    });
   } catch (error) {
     res.status(404).json({ error: "error while fetching products" });
   }

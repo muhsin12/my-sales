@@ -4,7 +4,7 @@ import {
   readAllPurchases,
   createPurchase,
   updatePurchases,
-  deletepurchases,
+  deletePurchases,
 } from "../../../controllers/purchase-controller";
 
 type Data = {
@@ -28,7 +28,7 @@ export default function handler(
           updatePurchases(req, res);
           break;
         case "DELETE":
-          deletepurchases(req, res);
+          deletePurchases(req, res);
           break;
       }
     })

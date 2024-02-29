@@ -12,6 +12,7 @@ import {
   TableBody,
   TableCell,
   TableRow,
+  TextField,
 } from "@mui/material";
 import {
   DataGrid,
@@ -28,8 +29,11 @@ import {
   createPurchase,
   deletePurchase,
   fetchPurchases,
+  searchPurchases,
 } from "../../services/expense-service";
 import { fetchCategories } from "../../services/expense-category-service";
+import ConfirmBox from "@/components/confirm-popup.component";
+import DataGridComponent from "@/components/data-grid.component";
 
 interface Iexpense {
   _id: string;
@@ -62,8 +66,19 @@ export default function Expenses() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [expenseId, setExpenseId] = useState("");
   const [categoryData, setCategoryData] = useState<Icategory[]>([]);
-  const [categoryId, setCategoryId] = useState("reset");
+  const [categoryId, setCategoryId] = useState("");
   const [expenseTotal, setExpenseTotal] = useState(0);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
+  const [pageState, setPageState] = useState({
+    isLoading: false,
+    data: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: 5,
+  });
   const handleOpen = () => {
     setSaveSuccess(false);
     setOpen(true);
@@ -84,16 +99,22 @@ export default function Expenses() {
   };
   useEffect(() => {
     getAllCategories();
-    getAllExpenses();
   }, []);
 
-  //find total
-  const findTotalExpenses = (expenses: any) => {
-    const sum = expenses.reduce((accumulator: any, object: any) => {
+  useEffect(() => {
+    if (fromDate == "" && toDate == "" && categoryId == "") {
+      getAllExpenses();
+    } else {
+      handleSearch();
+    }
+  }, [pageState.page, pageState.pageSize]);
+
+  useEffect(() => {
+    const sum = expenseData.reduce((accumulator: any, object: any) => {
       return accumulator + object.price;
     }, 0);
     setExpenseTotal(sum);
-  };
+  }, [expenseData]);
 
   //definition of purchase grid
   const columns: GridColDef[] = [
@@ -130,7 +151,7 @@ export default function Expenses() {
             variant="contained"
             color="error"
             onClick={(event) => {
-              handleDeleteClick(event, cellValues);
+              handleOpenDialog(event, cellValues);
             }}
           >
             Delete
@@ -151,34 +172,54 @@ export default function Expenses() {
   ];
 
   // handle delete click
-  const handleDeleteClick = (event: any, cellValues: GridRenderCellParams) => {
-    event.stopPropagation();
-    if (confirm("Are you Sure , Do you want to delete this purchase?")) {
-      deletePurchase(cellValues.row._id)
-        .then((response) => {
-          console.log(response);
+  const handleDeleteClick = (recordId: string) => {
+    deletePurchase(recordId)
+      .then((response) => {
+        if (fromDate == "" && toDate == "" && categoryId == "") {
           getAllExpenses();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
+        } else {
+          handleSearch();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   //find all expense
-  const getAllExpenses = () => {
-    fetchPurchases()
-      .then((res) => res.json())
-      .then((data: any) => {
-        data.purchases.map((expense: any) => {
+
+  const getAllExpenses = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+
+      const response = await fetchPurchases(pageState.page, pageState.pageSize);
+      const data = await response.json();
+
+      if (data?.purchases) {
+        const updatedPurchases = data?.purchases?.map((expense: any) => {
           const updateDate = expense?.purchaseDate?.split("T")[0];
-          expense.purchaseDate = updateDate;
-          return expense;
+          return { ...expense, purchaseDate: updateDate };
         });
-        setExpenseData(data.purchases);
-        setExpenseRawData(data.purchases);
-        findTotalExpenses(data.purchases);
-      });
+        setExpenseData(updatedPurchases);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedPurchases,
+          totalCount: data.totalPurchases,
+        }));
+      }
+
+      setPageState((old) => ({ ...old, isLoading: false }));
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+      // Handle error here if necessary
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
 
   //handle row click for popup opening
@@ -195,7 +236,11 @@ export default function Expenses() {
   // submitting the purchase form
   const purchaseFormSubmit = (formData: any) => {
     createPurchase(formData, editMode, expenseId).then((res) => {
-      getAllExpenses();
+      if (fromDate == "" && toDate == "" && categoryId == "") {
+        getAllExpenses();
+      } else {
+        handleSearch();
+      }
       handleClose();
       setEditMode(false);
       setRecordForEdit(null);
@@ -212,31 +257,82 @@ export default function Expenses() {
     saveSuccess: saveSuccess,
   };
 
-  // filtering the expense
-  const filterExpenses = (event: SelectChangeEvent) => {
-    let categoryId = event.target.value;
-    if (categoryId != "reset") {
-      setCategoryId(categoryId);
-      const filteredExpenseData = expenseRawData.filter(
-        (el) => el.categoryId == categoryId
-      );
-      setExpenseData(filteredExpenseData);
-      findTotalExpenses(filteredExpenseData);
-    } else {
-      setCategoryId("select category");
-      setExpenseData(expenseRawData);
-      findTotalExpenses(expenseRawData);
+  const handleSearch = async () => {
+    try {
+      setPageState((old) => ({ ...old, isLoading: true }));
+      const filterObj = {
+        fromDate,
+        toDate,
+        categoryId,
+        page: pageState.page,
+        pageSize: pageState.pageSize,
+      };
+
+      const response = await searchPurchases(filterObj);
+      const data = await response.json();
+
+      if (data?.purchases) {
+        const updatedPurchases = data?.purchases?.map((expense: any) => {
+          const updateDate = expense?.purchaseDate?.split("T")[0];
+          return { ...expense, purchaseDate: updateDate };
+        });
+
+        setExpenseData(updatedPurchases);
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: updatedPurchases,
+          totalCount: data.totalPurchases,
+        }));
+      } else {
+        setExpenseData([]);
+        setExpenseRawData([]);
+      }
+    } catch (error) {
+      console.error("Error searching purchases:", error);
+      // Handle error here if necessary
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
     }
+  };
+
+  const handleOpenDialog = (event: any, cellValues: GridRenderCellParams) => {
+    event.stopPropagation();
+    setRecordIdToDelete(cellValues.row._id);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    if (recordIdToDelete !== null) {
+      // Call your delete record API with recordIdToDelete
+      handleDeleteClick(recordIdToDelete);
+    }
+    setRecordIdToDelete("");
+    handleCloseDialog();
   };
 
   return (
     <>
       <Nav />
       <Container maxWidth="xl">
+        <ConfirmBox
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          context={"delete this record"}
+        />
         <Box sx={{ bgcolor: "#b2ebf2", height: "70px" }}>
           <Button
             variant="outlined"
-            style={{ background: "#00838f", color: "white", marginTop: "5px" }}
+            style={{ background: "#00838f", color: "white", marginTop: "15px" }}
             onClick={handleOpen}
           >
             ADD Expense
@@ -248,9 +344,9 @@ export default function Expenses() {
               name="categoryId"
               value={categoryId}
               label="Select Category"
-              onChange={filterExpenses}
+              onChange={(e) => setCategoryId(e.target.value)}
             >
-              <MenuItem value="reset">Select Category</MenuItem>
+              <MenuItem value="">Select Category</MenuItem>
               {categoryData.map((category: any) => (
                 <MenuItem key={category._id} value={category._id}>
                   {category.categoryName}
@@ -258,35 +354,54 @@ export default function Expenses() {
               ))}
             </Select>
           </FormControl>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="fromDate"
+              name="fromDate"
+              label="From Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <TextField
+              sx={{ m: 1, minWidth: 250 }}
+              id="toDate"
+              name="toDate"
+              label="To Date"
+              type="date"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <Button
+              variant="outlined"
+              style={{
+                background: "#00838f",
+                color: "white",
+                marginTop: "15px",
+              }}
+              onClick={handleSearch}
+            >
+              Search
+            </Button>
+          </FormControl>
         </Box>
-        <Box sx={{ bgcolor: "white", height: "70vh" }}>
-          <DataGrid
-            onRowClick={handleRowClick}
-            rows={expenseData}
-            getRowId={(row: any) => generateRandom()}
-            columns={columns}
-            pageSize={20}
-            rowsPerPageOptions={[5, 10, 15, 20]}
-            disableSelectionOnClick
-            experimentalFeatures={{ newEditingApi: true }}
-          />
-          <Box sx={{ bgcolor: "white", height: "30vh" }}>
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="tdWidth">Total</TableCell>
-                  <TableCell className="tdWidth">{expenseTotal}</TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                  <TableCell className="tdWidth"></TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
+        <DataGridComponent
+          pageState={pageState}
+          handleRowClick={handleRowClick}
+          totalAmount={expenseTotal}
+          columns={columns}
+          generateRandom={generateRandom}
+          setPageState={setPageState}
+        />
         <PurchasePopup {...popUpPropps} />
       </Container>
     </>

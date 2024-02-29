@@ -26,9 +26,10 @@ import { useState, useEffect } from "react";
 
 import Nav from "../nav";
 
-import { createItem, deleteItem, fetchItem } from "../../services/item-service";
+import { fetchItem } from "../../services/item-service";
 import { fetchCategories } from "../../services/category-service";
 import { createSales } from "@/services/sales-service";
+import ConfirmBox from "@/components/confirm-popup.component";
 
 interface Iproduct {
   _id: string;
@@ -57,6 +58,16 @@ export default function Home() {
   const [itemList, setItemList] = useState<Iproduct[]>([]);
   const [billItems, setBillItems] = useState<IbillItems[]>([]);
   const [billTotal, setBillTotal] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+
+  useEffect(() => {
+    if (billItems.length > 0) {
+      setIsButtonDisabled(false);
+    } else {
+      setIsButtonDisabled(true);
+    }
+  }, [billItems]);
 
   useEffect(() => {
     getAllCategories();
@@ -137,14 +148,36 @@ export default function Home() {
     salesData.details = billItems;
     salesData.totalPrice = billTotal;
     createSales(salesData, false).then((res) => {
-      console.log("after sales created-", res);
+      console.log("after sales created---", res);
+      setBillItems([]);
     });
+  };
+
+  const handleOpenDialog = () => {
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    console.log("Confirmed");
+    // Your confirm action here
+    createSale();
+    handleCloseDialog();
   };
 
   return (
     <>
       <Nav />
       <Container maxWidth="xl">
+        <ConfirmBox
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          context={"ceate this sale"}
+        />
         <Box sx={{ bgcolor: "#b2ebf2", height: "100px", overflowX: "auto" }}>
           <Grid
             container
@@ -250,7 +283,8 @@ export default function Home() {
                   variant="outlined"
                   size="large"
                   className="category-button"
-                  onClick={() => createSale()}
+                  disabled={isButtonDisabled}
+                  onClick={() => handleOpenDialog()}
                 >
                   Create Sales
                 </Button>
