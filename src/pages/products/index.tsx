@@ -10,7 +10,6 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import {
-  DataGrid,
   GridColDef,
   GridEventListener,
   GridRenderCellParams,

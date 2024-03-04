@@ -2,7 +2,6 @@ import * as React from "react";
 import Container from "@mui/material/Container";
 import { Box, Button } from "@mui/material";
 import {
-  DataGrid,
   GridColDef,
   GridEventListener,
   GridRenderCellParams,
@@ -18,6 +17,7 @@ import {
   deleteCategory,
 } from "../../services/expense-category-service";
 import ConfirmBox from "@/components/confirm-popup.component";
+import DataGridComponent from "@/components/data-grid.component";
 
 interface Icategory {
   _id: string;
@@ -43,6 +43,13 @@ export default function ExpenseCategory() {
   const [categoryId, setCategoryId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recordIdToDelete, setRecordIdToDelete] = useState<string>("");
+  const [pageState, setPageState] = useState({
+    isLoading: false,
+    data: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: 5,
+  });
 
   const handleOpen = () => {
     setOpen(true);
@@ -57,7 +64,7 @@ export default function ExpenseCategory() {
 
   useEffect(() => {
     getAllCategory();
-  }, []);
+  }, [pageState.page, pageState.pageSize]);
 
   const columns: GridColDef[] = [
     {
@@ -95,12 +102,40 @@ export default function ExpenseCategory() {
       });
   };
 
-  const getAllCategory = () => {
-    fetchCategories()
-      .then((res) => res.json())
-      .then((data) => {
-        setCategoryData(data.category);
-      });
+  const getAllCategory = async () => {
+    setPageState((old) => ({ ...old, isLoading: true }));
+    const params: any = {
+      page: pageState.page,
+      pageSize: pageState.pageSize,
+    };
+    try {
+      const res = await fetchCategories(params);
+      const data = await res.json();
+      setCategoryData(data.category);
+      if (data.totalRecords > 0) {
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: data.category,
+          totalCount: data.totalRecords,
+        }));
+      } else {
+        setPageState((old) => ({
+          ...old,
+          isLoading: false,
+          data: [],
+          totalCount: 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setPageState((old) => ({
+        ...old,
+        isLoading: false,
+        data: [],
+        totalCount: 0,
+      }));
+    }
   };
 
   const handleRowClick: GridEventListener<"rowClick"> = (params, event) => {
@@ -171,15 +206,13 @@ export default function ExpenseCategory() {
           </Button>
         </Box>
         <Box sx={{ bgcolor: "white", height: "70vh" }}>
-          <DataGrid
-            onRowClick={handleRowClick}
-            rows={categoryData}
-            getRowId={(row: any) => generateRandom()}
+          <DataGridComponent
+            pageState={pageState}
+            handleRowClick={handleRowClick}
+            totalAmount={0}
             columns={columns}
-            pageSize={20}
-            rowsPerPageOptions={[5, 10, 15, 20]}
-            disableSelectionOnClick
-            experimentalFeatures={{ newEditingApi: true }}
+            generateRandom={generateRandom}
+            setPageState={setPageState}
           />
         </Box>
         <CategoryPopup {...popUpPropps} />

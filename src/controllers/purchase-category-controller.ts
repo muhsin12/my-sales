@@ -20,20 +20,44 @@ export async function createCategory(
   }
 }
 
+async function getAllCategory(page: number, pageSize: number) {
+  const skipCount = (page - 1) * pageSize;
+  const categoryRecords = await PurchaseCategory.find()
+    .skip(skipCount)
+    .limit(pageSize);
+  const categoryCount = await PurchaseCategory.countDocuments({});
+  const result = { categoryCount, categoryRecords };
+  return result;
+}
+
+async function getAllCategoryWithoutPagination() {
+  const categoryRecords = await PurchaseCategory.find();
+  const categoryCount = await PurchaseCategory.countDocuments({});
+  const result = { categoryCount, categoryRecords };
+  return result;
+}
+
 export async function readAllCategory(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
-    const category = await PurchaseCategory.find();
-    // console.log("mpmuhins   .... .. .. ..  category----", category);
-    if (!category) {
-      return res.status(404).json({ error: "category not found" });
+    let queryResult: any;
+    const { page, pageSize } = req.query;
+    if (!page && !pageSize) {
+      queryResult = await getAllCategoryWithoutPagination();
+    } else {
+      queryResult = await getAllCategory(Number(page), Number(pageSize));
     }
-    res.status(200);
-    return res.json({ category });
+    if (!queryResult || queryResult.categoryCount === 0) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+    res.status(200).json({
+      category: queryResult.categoryRecords,
+      totalRecords: queryResult.categoryCount,
+    });
   } catch (error) {
-    res.status(404).json({ error: "error while fetching category" });
+    res.status(404).json({ error: "error while fetching  purchase category" });
   }
 }
 

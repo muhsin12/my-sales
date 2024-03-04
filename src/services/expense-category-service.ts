@@ -1,8 +1,12 @@
 const { END_POINT } = require("../config");
 const expenseCategoryEndPoint = END_POINT.EXPENSE_CATEGORY;
 
-export const fetchCategories = () => {
-  return fetch(expenseCategoryEndPoint, { method: "GET" });
+export const fetchCategories = (params?: any) => {
+  let searchUrl = expenseCategoryEndPoint;
+  if (params) {
+    searchUrl = `${searchUrl}?page=${params.page}&pageSize=${params.pageSize}`;
+  }
+  return fetch(searchUrl, { method: "GET" });
 };
 
 export const createCategory = (
