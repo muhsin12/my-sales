@@ -52,6 +52,13 @@ async function getAllProducts(page: number, pageSize: number) {
   return result;
 }
 
+async function getAllProductsWithoutPagination() {
+  const productRecords = await Products.find();
+  const productCount = await Products.countDocuments({});
+  const result = { productCount, productRecords };
+  return result;
+}
+
 export async function readAllProducts(
   req: NextApiRequest,
   res: NextApiResponse
@@ -59,7 +66,9 @@ export async function readAllProducts(
   try {
     let queryResult: any;
     const { categoryId, page, pageSize } = req.query;
-    if (categoryId) {
+    if (!categoryId && !page && !pageSize) {
+      queryResult = await getAllProductsWithoutPagination();
+    } else if (categoryId) {
       queryResult = await getProductsBasedOnCategory(
         categoryId,
         Number(page),
