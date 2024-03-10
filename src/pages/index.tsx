@@ -1,12 +1,26 @@
 import Head from "next/head";
 import { Inter } from "@next/font/google";
 import CssBaseline from "@mui/material/CssBaseline";
-
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { loginToPos } from "../services/login-service";
 import Nav from "./nav";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    // await loginUser(user);
+    const userLogin = await loginToPos(username, password);
+    if (userLogin?.status == 200) {
+      router.push("/pos");
+    }
+  };
   return (
     <>
       <Head>
@@ -18,6 +32,19 @@ export default function Home() {
       <CssBaseline />
 
       <Nav />
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit">Login</button>
+      </form>
     </>
   );
 }
