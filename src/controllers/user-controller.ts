@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { compare } from "bcrypt";
 import Users from "../models/users-model";
 
 export async function createUser(req: NextApiRequest, res: NextApiResponse) {
@@ -85,14 +86,18 @@ export async function deleteUser(req: NextApiRequest, res: NextApiResponse) {
 
 export async function loginUser(req: NextApiRequest, res: NextApiResponse) {
   const { username, password } = req.body;
-  const existingUser = await Users.findOne({
-    username: username,
-    password: password,
-  });
+  const existingUser = await Users.findOne({ username });
   if (existingUser) {
     // Implement session management, JWT token creation, or other authentication mechanisms here.
-    console.log("Login successful");
-    res.status(200).json({ message: "Login successful" });
+    const passwordMatch = await compare(password, existingUser.password);
+    if (passwordMatch) {
+      const userDetails = {
+        username: existingUser.username,
+        role: existingUser.role,
+      };
+      res.status(200).json({ message: "Login successful", userDetails });
+      console.log("Login successful");
+    }
   } else {
     res.status(401).json({ message: "Invalid username or password" });
   }
