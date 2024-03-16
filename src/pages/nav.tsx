@@ -12,39 +12,50 @@ import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
 import Link from "next/link";
 import { useAuth } from "@/hooks/auth";
-const pages = [
-  { headerName: "Pos", link: "/pos" },
-  { headerName: "Category", link: "category" },
-  { headerName: "Items", link: "products" },
-  { headerName: "Sales Data", link: "sales" },
-  { headerName: "Expense Category", link: "expense-category" },
-  { headerName: "Expense Data", link: "expenses" },
-];
+// const pages = [
+//   { headerName: "Pos", link: "/pos" },
+//   { headerName: "Category", link: "category" },
+//   { headerName: "Items", link: "products" },
+//   { headerName: "Sales Data", link: "sales" },
+//   { headerName: "Expense Category", link: "expense-category" },
+//   { headerName: "Expense Data", link: "expenses" },
+// ];
+import { useState, useEffect } from "react";
+import { fetchUserSession } from "@/services/user-service";
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
-
+interface User {
+  username: string;
+  role: string;
+  // Add more properties as needed
+}
 const Nav: React.FC = () => {
+  const [userSession, setUserSession] = useState(false);
+  const [pages, setPages] = useState([
+    { headerName: "Pos", link: "/pos" },
+    { headerName: "Category", link: "category" },
+    { headerName: "Items", link: "products" },
+    { headerName: "Sales Data", link: "sales" },
+    { headerName: "Expense Category", link: "expense-category" },
+    { headerName: "Expense Data", link: "expenses" },
+  ]);
+  const [userSessionData, setUserSessionData] = useState<User | null>(null);
   const { user, loading, login, logout, authError } = useAuth();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null
-  );
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null
-  );
 
-  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
+  useEffect(() => {
+    const userData = fetchUserSession();
+    console.log("user data in nav--", userData);
+    if (userData) {
+      setUserSession(true);
+      setUserSessionData(userData);
+      const filteredPages =
+        userSessionData?.role === "admin"
+          ? pages
+          : pages.filter((page) => page.headerName !== "Expense Data");
+    } else {
+      setUserSession(false);
+    }
+    console.log("user ssss--", user);
+  }, []);
 
   return (
     <AppBar position="static" style={{ background: "#00838f" }}>
@@ -69,82 +80,32 @@ const Nav: React.FC = () => {
             Restaurant POC
           </Typography>
 
-          <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href=""
-            sx={{
-              mr: 2,
-              display: { xs: "flex", md: "none" },
-              flexGrow: 1,
-              fontFamily: "monospace",
-              fontWeight: 700,
-              letterSpacing: ".3rem",
-              color: "inherit",
-              textDecoration: "none",
-            }}
-          >
-            Diamond Lock
-          </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
             {pages.map((page) => (
               <Link href={page.link} key={page.link}>
                 <Button
                   key={page.headerName}
-                  onClick={handleCloseNavMenu}
                   sx={{ my: 2, color: "white", display: "block" }}
                 >
                   {page.headerName}
                 </Button>
               </Link>
             ))}
-
-            <Link href="#">
-              <Button
-                onClick={logout}
-                sx={{
-                  my: 2,
-                  color: "white",
-                  display: "block",
-                  fontWeight: "bold",
-                }}
-              >
-                Logout
-              </Button>
-            </Link>
-          </Box>
-
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton
-                onClick={handleOpenUserMenu}
-                sx={{ p: 0 }}
-              ></IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: "45px" }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
+            {userSession && (
+              <Link href="#">
+                <Button
+                  onClick={logout}
+                  sx={{
+                    my: 2,
+                    color: "white",
+                    display: "block",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Logout
+                </Button>
+              </Link>
+            )}
           </Box>
         </Toolbar>
       </Container>

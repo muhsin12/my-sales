@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { loginToPos } from "../services/login-service";
+import { fetchUserSession } from "@/services/user-service";
 
 interface User {
   username: string;
@@ -23,11 +24,10 @@ export function useAuth() {
 
   useEffect(() => {
     console.log("state user-", user);
-    const userDetailsString = localStorage.getItem("userDetails");
-    if (userDetailsString) {
-      const userDetails = JSON.parse(userDetailsString);
-      console.log("user session--", userDetails); // This will log the parsed object
-      const redirectPath = userDetails?.role === "admin" ? "admin" : "pos";
+    const userSession = fetchUserSession();
+    if (userSession) {
+      console.log("user session--", userSession); // This will log the parsed object
+      const redirectPath = userSession?.role === "admin" ? "admin" : "pos";
       router.push(redirectPath);
     } else {
       console.log("no user session found");
