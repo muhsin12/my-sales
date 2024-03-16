@@ -18,38 +18,36 @@ interface AuthResponse {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
 
   useEffect(() => {
-    // const checkAuth = async () => {
-    //   try {
-    //     // Simulate fetching user data from an API
-    //     const response: AuthResponse = await fetchUserData(); // Fetch user data from an API
-    //     setUser(response.user);
-    //   } catch (error) {
-    //     console.error("Authentication error:", error);
-    //     setUser(null);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
-    // checkAuth();
     console.log("state user-", user);
+    const userDetailsString = localStorage.getItem("userDetails");
+    if (userDetailsString) {
+      const userDetails = JSON.parse(userDetailsString);
+      console.log("user session--", userDetails); // This will log the parsed object
+      const redirectPath = userDetails?.role === "admin" ? "admin" : "pos";
+      router.push(redirectPath);
+    } else {
+      console.log("no user session found");
+      router.push("/");
+    }
   }, [user]);
 
   const login = async (username: string, password: string) => {
     try {
       // Simulate logging in with credentials
-      const response = await loginToPos(username, password); // Fake login function
+      const response = await loginToPos(username, password); //  login service
       if (response?.status == 200) {
         const userData = await response?.json();
         console.log(userData);
         setUser(userData.userDetails);
-
-        // router.push("/pos");
         setAuthError(null);
+        localStorage.setItem(
+          "userDetails",
+          JSON.stringify(userData.userDetails)
+        );
       } else if (response?.status == 401) {
         setUser(null);
         setAuthError("Invalid user name or Password");
@@ -60,38 +58,17 @@ export function useAuth() {
   };
 
   const logout = async () => {
+    console.log("loging out in auth");
     try {
-      // Simulate logging out
-      await fakeLogout(); // Fake logout function
       setUser(null);
-      router.push("/login"); // Redirect to login page after successful logout
+      localStorage.removeItem("userDetails");
+      setTimeout(() => {
+        router.push("/");
+      }, 100);
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
 
   return { user, loading, login, logout, authError };
-}
-
-// Example functions for simulating authentication actions (replace with actual API calls in your application)
-
-// async function fetchUserData(): Promise<AuthResponse> {
-//   // Simulate fetching user data from an API
-//   return new Promise<AuthResponse>((resolve) => {
-//     setTimeout(() => {
-//       resolve({
-//         user: { id: 1, name: "John Doe" }, // Sample user data
-//       });
-//     }, 1000); // Simulate delay
-//   });
-// }
-
-async function fakeLogout(): Promise<void> {
-  // Simulate logout
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      console.log("Logged out");
-      resolve();
-    }, 1000); // Simulate delay
-  });
 }

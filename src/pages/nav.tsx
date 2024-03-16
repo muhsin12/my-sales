@@ -11,6 +11,7 @@ import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
 import Link from "next/link";
+import { useAuth } from "@/hooks/auth";
 const pages = [
   { headerName: "Pos", link: "/pos" },
   { headerName: "Category", link: "category" },
@@ -21,7 +22,8 @@ const pages = [
 ];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
-function Nav() {
+const Nav: React.FC = () => {
+  const { user, loading, login, logout, authError } = useAuth();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -98,6 +100,20 @@ function Nav() {
                 </Button>
               </Link>
             ))}
+
+            <Link href="#">
+              <Button
+                onClick={logout}
+                sx={{
+                  my: 2,
+                  color: "white",
+                  display: "block",
+                  fontWeight: "bold",
+                }}
+              >
+                Logout
+              </Button>
+            </Link>
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>
@@ -134,5 +150,5 @@ function Nav() {
       </Container>
     </AppBar>
   );
-}
+};
 export default Nav;

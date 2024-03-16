@@ -1,14 +1,12 @@
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
-import { useRouter } from "next/router";
 import { useAuth } from "../hooks/auth";
 
 import Nav from "./nav";
 import LoginForm from "@/components/login-component";
 
 export default function Home() {
-  const router = useRouter();
-  const { user, loading, login, logout, authError } = useAuth();
+  const { login, authError } = useAuth();
   return (
     <>
       <Head>
