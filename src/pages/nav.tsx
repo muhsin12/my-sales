@@ -12,14 +12,6 @@ import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
 import Link from "next/link";
 import { useAuth } from "@/hooks/auth";
-// const pages = [
-//   { headerName: "Pos", link: "/pos" },
-//   { headerName: "Category", link: "category" },
-//   { headerName: "Items", link: "products" },
-//   { headerName: "Sales Data", link: "sales" },
-//   { headerName: "Expense Category", link: "expense-category" },
-//   { headerName: "Expense Data", link: "expenses" },
-// ];
 import { useState, useEffect } from "react";
 import { fetchUserSession } from "@/services/user-service";
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
@@ -28,33 +20,40 @@ interface User {
   role: string;
   // Add more properties as needed
 }
+interface NavType {
+  headerName: string;
+  link: string;
+}
+
+const pagesData: NavType[] = [
+  { headerName: "Pos", link: "/pos" },
+  { headerName: "Category", link: "category" },
+  { headerName: "Items", link: "products" },
+  { headerName: "Sales Data", link: "sales" },
+  { headerName: "Expense Category", link: "expense-category" },
+  { headerName: "Expense Data", link: "expenses" },
+];
 const Nav: React.FC = () => {
   const [userSession, setUserSession] = useState(false);
-  const [pages, setPages] = useState([
-    { headerName: "Pos", link: "/pos" },
-    { headerName: "Category", link: "category" },
-    { headerName: "Items", link: "products" },
-    { headerName: "Sales Data", link: "sales" },
-    { headerName: "Expense Category", link: "expense-category" },
-    { headerName: "Expense Data", link: "expenses" },
-  ]);
+  const [pages, setPages] = useState<NavType[]>(pagesData);
+
+  const [filteredPage, setFilteredPage] = useState<NavType[]>([]);
   const [userSessionData, setUserSessionData] = useState<User | null>(null);
-  const { user, loading, login, logout, authError } = useAuth();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const userData = fetchUserSession();
-    console.log("user data in nav--", userData);
     if (userData) {
       setUserSession(true);
       setUserSessionData(userData);
-      const filteredPages =
-        userSessionData?.role === "admin"
+      const filteredPageData =
+        userData?.role === "admin"
           ? pages
-          : pages.filter((page) => page.headerName !== "Expense Data");
+          : pages?.filter((page) => page.headerName !== "Expense Data");
+      setFilteredPage(filteredPageData);
     } else {
       setUserSession(false);
     }
-    console.log("user ssss--", user);
   }, []);
 
   return (
@@ -81,7 +80,7 @@ const Nav: React.FC = () => {
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            {pages.map((page) => (
+            {filteredPage.map((page) => (
               <Link href={page.link} key={page.link}>
                 <Button
                   key={page.headerName}
