@@ -94,13 +94,4 @@ export async function deleteCategory(
   } catch (error) {
     return res.status(404).json({ error: error });
   }
-
-  //   return customers
-  //     .findByIdAndDelete(customer_id)
-  //     .then((customer) =>
-  //       customer
-  //         ? res.status(201).json({ message: "customer deleted" })
-  //         : res.status(400).json({ message: "customer not found" })
-  //     )
-  //     .catch((error) => res.status(500).json({ error }));
 }

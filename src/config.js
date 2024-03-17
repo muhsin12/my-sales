@@ -8,6 +8,8 @@ const END_POINT = {
   EXPENSE: "/api/purchases",
   SALES: "/api/sales",
   SALES_DETAIL: "/api/sales-details",
+  USER: "/api/user",
+  LOGIN: "/api/login",
 };
 module.exports = {
   // MongoDB connection URI
