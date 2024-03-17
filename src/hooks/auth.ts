@@ -20,20 +20,21 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [firstLogin, setFirstLogin] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
     console.log("state user-", user);
     const userSession = fetchUserSession();
-    if (userSession) {
+    if (userSession && firstLogin) {
       console.log("user session--", userSession); // This will log the parsed object
       const redirectPath = userSession?.role === "admin" ? "admin" : "pos";
       router.push(redirectPath);
-    } else {
+    } else if (!userSession) {
       console.log("no user session found");
       router.push("/");
     }
-  }, [user]);
+  }, [user, firstLogin]);
 
   const login = async (username: string, password: string) => {
     try {
@@ -48,6 +49,7 @@ export function useAuth() {
           "userDetails",
           JSON.stringify(userData.userDetails)
         );
+        setFirstLogin(true);
       } else if (response?.status == 401) {
         setUser(null);
         setAuthError("Invalid user name or Password");
