@@ -176,6 +176,8 @@ export default function Home() {
           onClose={handleCloseDialog}
           onConfirm={handleConfirmAction}
           context={"ceate this sale"}
+          data={billItems}
+          totalAmount={billTotal}
         />
         <Box sx={{ bgcolor: "#b2ebf2", height: "100px", overflowX: "auto" }}>
           <Grid
