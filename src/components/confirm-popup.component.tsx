@@ -52,17 +52,20 @@ const ConfirmBox: React.FC<ConfirmBoxProps> = ({
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">Confirm Action</DialogTitle>
+        <DialogTitle id="alert-dialog-title" className="hideInPrint">
+          Confirm Action
+        </DialogTitle>
         <DialogContent>
           {data && data.length > 0 ? (
             <div style={{ fontFamily: "monospace" }}>
-              <p id="alert-dialog-description">
+              <p id="alert-dialog-description" className="hideInPrint">
                 Are you sure you want to {context}?
               </p>
               <div
                 style={{
                   borderBottom: "1px solid black",
                   marginBottom: "8px",
+                  width: "200px",
                 }}
               >
                 <div
@@ -113,7 +116,7 @@ const ConfirmBox: React.FC<ConfirmBoxProps> = ({
             </DialogContentText>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions className="hideInPrint">
           <Button onClick={handleClose} color="primary">
             Cancel
           </Button>
