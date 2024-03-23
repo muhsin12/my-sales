@@ -20,20 +20,43 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [firstLogin, setFirstLogin] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
     console.log("state user-", user);
     const userSession = fetchUserSession();
-    if (userSession) {
+    if (userSession && firstLogin) {
       console.log("user session--", userSession); // This will log the parsed object
       const redirectPath = userSession?.role === "admin" ? "admin" : "pos";
       router.push(redirectPath);
-    } else {
+    } else if (!userSession) {
       console.log("no user session found");
       router.push("/");
     }
-  }, [user]);
+
+    // Set timeout for automatic logout after 5 minutes of inactivity
+    // const logoutTimer = setTimeout(() => {
+    //   logout(); // Call the logout function after 5 minutes
+    // }, 30 * 60 * 1000); // 5 minutes in milliseconds
+
+    // Clear the timeout if the user becomes active again
+    // const clearLogoutTimer = () => clearTimeout(logoutTimer);
+
+    // Add event listeners to reset the timer on user activity
+    // window.addEventListener("mousemove", clearLogoutTimer);
+    // window.addEventListener("mousedown", clearLogoutTimer);
+    // window.addEventListener("keypress", clearLogoutTimer);
+    // window.addEventListener("touchstart", clearLogoutTimer);
+
+    // // Cleanup event listeners on component unmount
+    // return () => {
+    //   window.removeEventListener("mousemove", clearLogoutTimer);
+    //   window.removeEventListener("mousedown", clearLogoutTimer);
+    //   window.removeEventListener("keypress", clearLogoutTimer);
+    //   window.removeEventListener("touchstart", clearLogoutTimer);
+    // };
+  }, [user, firstLogin]);
 
   const login = async (username: string, password: string) => {
     try {
@@ -48,6 +71,7 @@ export function useAuth() {
           "userDetails",
           JSON.stringify(userData.userDetails)
         );
+        setFirstLogin(true);
       } else if (response?.status == 401) {
         setUser(null);
         setAuthError("Invalid user name or Password");

@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import mongoose from "mongoose";
 import Counter from "../models/counter-model";
 import Sales from "../models/sales-model";
 import SalesDetails from "../models/sales-details-model";
 import { deleteSalesDetail } from "./sales-details-controller";
+import { printDocument } from "./print-controller";
 
 async function getNextSequence() {
   try {
@@ -80,6 +80,7 @@ export async function createSales(req: NextApiRequest, res: NextApiResponse) {
                 }
                 // Log each sales details record
                 console.log("sales details record---2---", data);
+                printDocument("muhsin data333377777777");
                 resolve(data);
               });
             });
