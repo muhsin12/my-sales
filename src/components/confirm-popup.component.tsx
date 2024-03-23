@@ -33,15 +33,13 @@ const ConfirmBox: React.FC<ConfirmBoxProps> = ({
 }) => {
   const handleConfirm = () => {
     onConfirm();
-    printReceipt();
+  };
+  const printDocument = () => {
+    window.print();
   };
 
   const handleClose = () => {
     onClose();
-  };
-
-  const printReceipt = () => {
-    window.print();
   };
 
   return (
@@ -94,25 +92,34 @@ const ConfirmBox: React.FC<ConfirmBoxProps> = ({
                   <span>${item.itemPrice.toFixed(2)}</span>
                 </div>
               ))}
+
+              {totalAmount && (
+                <DialogContentText
+                  style={{
+                    fontFamily: "monospace",
+                    fontWeight: "bold",
+                    fontSize: "16px",
+                    marginTop: "8px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span>Total:</span>
+                  <span>${totalAmount.toFixed(2)}</span>
+                </DialogContentText>
+              )}
+              <Button
+                className="hideInPrint"
+                onClick={printDocument}
+                color="primary"
+                autoFocus
+              >
+                print document
+              </Button>
             </div>
           ) : (
             <DialogContentText id="alert-dialog-description">
               Are you sure you want to {context}?
-            </DialogContentText>
-          )}
-          {totalAmount && (
-            <DialogContentText
-              style={{
-                fontFamily: "monospace",
-                fontWeight: "bold",
-                fontSize: "16px",
-                marginTop: "8px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
-              <span>Total:</span>
-              <span>${totalAmount.toFixed(2)}</span>
             </DialogContentText>
           )}
         </DialogContent>

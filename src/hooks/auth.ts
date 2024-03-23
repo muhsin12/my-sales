@@ -34,6 +34,28 @@ export function useAuth() {
       console.log("no user session found");
       router.push("/");
     }
+
+    // Set timeout for automatic logout after 5 minutes of inactivity
+    // const logoutTimer = setTimeout(() => {
+    //   logout(); // Call the logout function after 5 minutes
+    // }, 30 * 60 * 1000); // 5 minutes in milliseconds
+
+    // Clear the timeout if the user becomes active again
+    // const clearLogoutTimer = () => clearTimeout(logoutTimer);
+
+    // Add event listeners to reset the timer on user activity
+    // window.addEventListener("mousemove", clearLogoutTimer);
+    // window.addEventListener("mousedown", clearLogoutTimer);
+    // window.addEventListener("keypress", clearLogoutTimer);
+    // window.addEventListener("touchstart", clearLogoutTimer);
+
+    // // Cleanup event listeners on component unmount
+    // return () => {
+    //   window.removeEventListener("mousemove", clearLogoutTimer);
+    //   window.removeEventListener("mousedown", clearLogoutTimer);
+    //   window.removeEventListener("keypress", clearLogoutTimer);
+    //   window.removeEventListener("touchstart", clearLogoutTimer);
+    // };
   }, [user, firstLogin]);
 
   const login = async (username: string, password: string) => {
